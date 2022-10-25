@@ -113,7 +113,7 @@ impl Assembler {
                 self.eat(TokenType::RParen)?;
                 match id.value.as_str() {
                     "s" => Ok(Operand::Stack(num)),
-                    "r" => Ok(Operand::Stack(num)),
+                    "r" => Ok(Operand::Register(num)),
                     other => Err(anyhow!("Unknown operation '{:?}'", other)),
                 }
             }

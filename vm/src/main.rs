@@ -1,6 +1,9 @@
 mod vm;
 
-use shared::instruction::{OpCode, Operation, Variant};
+use shared::{
+    fileformat::FileFormat,
+    instruction::{OpCode, Operation, Variant},
+};
 
 use crate::vm::VM;
 
@@ -29,20 +32,20 @@ macro_rules! op {
 }
 
 fn main() {
-    let program: Vec<usize> = vec![
-        op!(Mov, Register, Direct),
-        3,
-        70,
-        op!(Push, Register),
-        3,
-        op!(Push, Direct),
-        9,
-        op!(Add),
-        op!(Mov, Register, Stack),
-        3,
-        0,
-        op!(Pop),
-    ];
+    // let program: Vec<usize> = vec![
+    //     op!(Mov, Register, Direct),
+    //     3,
+    //     70,
+    //     op!(Push, Register),
+    //     3,
+    //     op!(Push, Direct),
+    //     9,
+    //     op!(Add),
+    //     op!(Mov, Register, Stack),
+    //     3,
+    //     0,
+    //     op!(Pop),
+    // ];
 
     let program: Vec<usize> = vec![
         // first 2
@@ -64,11 +67,21 @@ fn main() {
         5,
     ];
 
-    for (i, op) in program.iter().enumerate() {
-        println!("{}: {} {:#X} {:#b}", i, op, op, op);
-    }
-
     // let mut vm = VM::new(program);
     // vm.run_max(61);
     // vm.dump();
+    //
+    // for (i, op) in program.iter().enumerate() {
+    //     println!("{}: {} {:#X} {:#b}", i, op, op, op);
+    // }
+
+    let file = FileFormat::from_file("test.out".to_string()).unwrap();
+
+    for (i, op) in file.program.iter().enumerate() {
+        println!("{}: {} {:#X} {:#b}", i, op, op, op);
+    }
+
+    let mut vm = VM::new(file.program);
+    vm.run_max(61);
+    vm.dump();
 }
