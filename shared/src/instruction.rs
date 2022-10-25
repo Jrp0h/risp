@@ -23,6 +23,31 @@ impl Operation {
             _ => None,
         }
     }
+
+    pub fn from_asm(value: &str) -> Option<Operation> {
+        match value {
+            "nop" => Some(Operation::Nop),
+            "add" => Some(Operation::Add),
+            "push" => Some(Operation::Push),
+            "pop" => Some(Operation::Pop),
+            "mov" => Some(Operation::Mov),
+            "jmp" => Some(Operation::Jmp),
+            "dup" => Some(Operation::Dup),
+            _ => None,
+        }
+    }
+
+    pub fn to_asm(&self) -> &'static str {
+        match self {
+            Operation::Nop => "nop",
+            Operation::Add => "add",
+            Operation::Push => "push",
+            Operation::Pop => "pop",
+            Operation::Mov => "mov",
+            Operation::Jmp => "jmp",
+            Operation::Dup => "dup",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]

@@ -68,7 +68,7 @@ fn main() {
         println!("{}: {} {:#X} {:#b}", i, op, op, op);
     }
 
-    let mut vm = VM::new(program);
-    vm.run_max(61);
-    vm.dump();
+    // let mut vm = VM::new(program);
+    // vm.run_max(61);
+    // vm.dump();
 }
