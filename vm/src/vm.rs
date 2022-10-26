@@ -158,30 +158,26 @@ impl VM {
         let where_variant = op.variants().unwrap()[0];
         let where_value = self.advance().unwrap();
 
-        let what_variant = op.variants().unwrap()[1];
+        println!(
+            "where_value: {:#?}, where_variant: {:#?}",
+            where_value, where_variant
+        );
 
-        let what = match what_variant {
-            Variant::Direct => self.advance().unwrap(),
-            Variant::Register => {
-                let value = self.advance().unwrap();
-                self.register[value]
-            }
-            Variant::Stack => {
-                let value = self.advance().unwrap();
-                if self.stack.len() == 0 {
-                    panic!("No elements in stack");
-                }
-                self.stack[self.stack.len() - (value + 1)]
-            }
-            other => panic!("Invalid mov variant ({:?})", other),
-        };
+        let what_variant = op.variants().unwrap()[1];
+        let what_value = self.advance().unwrap();
+        println!(
+            "what_value: {:#?}, what_variant: {:#?}",
+            what_value, what_variant
+        );
+        let what = self.value_from_variant(what_variant, what_value).unwrap();
 
         match where_variant {
             Variant::Register => {
                 self.register[where_value] = what;
             }
             Variant::Stack => {
-                self.stack[where_value] = what;
+                let len = self.stack.len();
+                self.stack[len - (where_value + 1)] = what;
             }
             other => panic!("Invalid mov variant ({:?})", other),
         }
@@ -193,24 +189,8 @@ impl VM {
 
     fn op_jmp(&mut self, op: &OpCode) {
         let variant = op.variants().unwrap()[0];
-
-        match variant {
-            Variant::Direct => {
-                self.pc = self.advance().unwrap();
-            }
-            Variant::Register => {
-                let value = self.advance().unwrap();
-                self.pc = self.register[value as usize]
-            }
-            Variant::Stack => {
-                let value = self.advance().unwrap();
-                if self.stack.len() == 0 {
-                    panic!("No elements in stack");
-                }
-                self.pc = self.stack[self.stack.len() - (value + 1)]
-            }
-            other => panic!("Invalid jmp variant ({:?})", other),
-        }
+        let value = self.advance().unwrap();
+        self.pc = self.value_from_variant(variant, value).unwrap();
     }
     fn op_dup(&mut self, op: &OpCode) {
         let variant = op.variants().unwrap()[0];

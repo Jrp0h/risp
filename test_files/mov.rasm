@@ -1,0 +1,4 @@
+push 50
+push 60
+
+mov s(1), s(0)
