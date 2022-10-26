@@ -1,11 +1,11 @@
 use std::{collections::HashMap, iter::Peekable};
 
-use crate::{
+use anyhow::{anyhow, Context, Result};
+use shared::instruction::{OpCode, Operation, Variant};
+use shared::{
     lexer::Lexer,
     token::{Token, TokenSpan, TokenType},
 };
-use anyhow::{anyhow, Context, Result};
-use shared::instruction::{OpCode, Operation, Variant};
 
 macro_rules! error_at {
     ($loc:expr, $msg:expr,  $($items:expr),*) => {{
