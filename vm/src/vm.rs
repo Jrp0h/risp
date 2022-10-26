@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use shared::instruction::{OpCode, Operation, Variant};
+use shared::instruction::{NativeFunctions, OpCode, Operation, Variant};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum CmpResult {
@@ -13,6 +13,7 @@ pub struct VM {
 
     pc: usize,
     stack: Vec<usize>,
+    call_stack: Vec<usize>,
     register: [usize; 10],
     cmp: CmpResult,
 }
@@ -23,6 +24,7 @@ impl VM {
             program,
             pc: 0,
             stack: vec![],
+            call_stack: vec![],
             register: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             cmp: CmpResult::Equal,
         }
@@ -61,6 +63,8 @@ impl VM {
             Some(Operation::JmpLt) => self.op_jmp(&opcode, Operation::JmpLt),
             Some(Operation::JmpGte) => self.op_jmp(&opcode, Operation::JmpGte),
             Some(Operation::JmpLte) => self.op_jmp(&opcode, Operation::JmpLte),
+            Some(Operation::Call) => return self.op_call(&opcode),
+            Some(Operation::Ret) => self.op_ret(),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }
@@ -170,17 +174,9 @@ impl VM {
         let where_variant = op.variants().unwrap()[0];
         let where_value = self.advance().unwrap();
 
-        println!(
-            "where_value: {:#?}, where_variant: {:#?}",
-            where_value, where_variant
-        );
-
         let what_variant = op.variants().unwrap()[1];
         let what_value = self.advance().unwrap();
-        println!(
-            "what_value: {:#?}, what_variant: {:#?}",
-            what_value, what_variant
-        );
+
         let what = self.value_from_variant(what_variant, what_value).unwrap();
 
         match where_variant {
@@ -273,5 +269,31 @@ impl VM {
         } else {
             self.cmp = CmpResult::Equal;
         }
+    }
+
+    fn op_call(&mut self, op: &OpCode) -> bool {
+        let value = self.advance().unwrap();
+        let variant = op.variants().unwrap()[0];
+        match variant {
+            Variant::Direct => {
+                self.call_stack.push(self.pc + 1);
+                self.pc = value;
+            }
+            Variant::Native => {
+                if value == NativeFunctions::Print as usize {
+                    println!("{}", self.stack[self.stack.len() - 1]);
+                }
+                if value == NativeFunctions::Exit as usize {
+                    return false;
+                }
+            }
+            _ => panic!("Invalid call variant {:?}", variant),
+        }
+
+        return true;
+    }
+
+    fn op_ret(&mut self) {
+        self.pc = self.call_stack.pop().unwrap();
     }
 }

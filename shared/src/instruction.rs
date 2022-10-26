@@ -21,6 +21,8 @@ pub enum Operation {
     JmpLte = 16,
 
     Mod = 17,
+    Call = 18,
+    Ret = 19,
 }
 
 impl Operation {
@@ -44,6 +46,8 @@ impl Operation {
             15 => Some(Operation::JmpGte),
             16 => Some(Operation::JmpLte),
             17 => Some(Operation::Mod),
+            18 => Some(Operation::Call),
+            19 => Some(Operation::Ret),
             _ => None,
         }
     }
@@ -68,6 +72,8 @@ impl Operation {
             "jmp_gte" => Some(Operation::JmpGte),
             "jmp_lte" => Some(Operation::JmpLte),
             "mod" => Some(Operation::Mod),
+            "call" => Some(Operation::Call),
+            "ret" => Some(Operation::Ret),
             _ => None,
         }
     }
@@ -92,6 +98,8 @@ impl Operation {
             Operation::JmpGte => "jmp_gte",
             Operation::JmpLte => "jmp_lte",
             Operation::Mod => "jmp_lte",
+            Operation::Call => "call",
+            Operation::Ret => "ret",
         }
     }
 }
@@ -104,6 +112,7 @@ pub enum Variant {
     Direct = 2,
     Indirect = 3,
     Stack = 4,
+    Native = 5,
 }
 
 impl Variant {
@@ -114,6 +123,7 @@ impl Variant {
             2 => Some(Variant::Direct),
             3 => Some(Variant::Indirect),
             4 => Some(Variant::Stack),
+            5 => Some(Variant::Native),
             _ => None,
         }
     }
@@ -155,5 +165,22 @@ impl OpCode {
 
     pub fn as_usize(&self) -> usize {
         self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(u8)]
+pub enum NativeFunctions {
+    Print = 0,
+    Exit = 1,
+}
+
+impl NativeFunctions {
+    pub fn from_string(name: &str) -> Option<NativeFunctions> {
+        match name {
+            "print" => Some(NativeFunctions::Print),
+            "exit" => Some(NativeFunctions::Exit),
+            _ => None,
+        }
     }
 }

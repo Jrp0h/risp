@@ -33,6 +33,9 @@ pub enum TokenType {
     Dot,
     LParen,
     RParen,
+
+    Dollar,
+
     Number,
     String,
     EoF,

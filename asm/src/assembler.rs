@@ -1,7 +1,7 @@
 use std::{collections::HashMap, iter::Peekable};
 
 use anyhow::{anyhow, Context, Result};
-use shared::instruction::{OpCode, Operation, Variant};
+use shared::instruction::{NativeFunctions, OpCode, Operation, Variant};
 use shared::{
     lexer::Lexer,
     token::{Token, TokenSpan, TokenType},
@@ -101,11 +101,11 @@ impl Assembler {
             "mov" => self.handle_mov(),
             "push" => self.handle_push(),
             "dup" => self.handle_dup(),
-            "add" => self.handle_math(Operation::Add),
-            "sub" => self.handle_math(Operation::Sub),
-            "mult" => self.handle_math(Operation::Mult),
-            "div" => self.handle_math(Operation::Div),
-            "mod" => self.handle_math(Operation::Mod),
+            "add" => self.handle_zero_operands(Operation::Add),
+            "sub" => self.handle_zero_operands(Operation::Sub),
+            "mult" => self.handle_zero_operands(Operation::Mult),
+            "div" => self.handle_zero_operands(Operation::Div),
+            "mod" => self.handle_zero_operands(Operation::Mod),
             "jmp" => self.handle_jmp(Operation::Jmp),
             "jmp_eq" => self.handle_jmp(Operation::JmpEq),
             "jmp_ne" => self.handle_jmp(Operation::JmpNe),
@@ -114,6 +114,8 @@ impl Assembler {
             "jmp_gte" => self.handle_jmp(Operation::JmpGte),
             "jmp_lte" => self.handle_jmp(Operation::JmpLte),
             "cmp" => self.handle_cmp(),
+            "call" => self.handle_call(),
+            "ret" => self.handle_zero_operands(Operation::Ret),
             other => Err(error_at!(
                 self.current.span,
                 "Unknown instruction {}",
@@ -154,6 +156,10 @@ impl Assembler {
             TokenType::Dot => {
                 let label = self.eat(TokenType::Identifier)?;
                 Ok(Operand::Label(label.value))
+            }
+            TokenType::Dollar => {
+                let label = self.eat(TokenType::Identifier)?;
+                Ok(Operand::Native(label.value))
             }
             other => Err(error_at!(
                 self.current.span,
@@ -209,7 +215,7 @@ impl Assembler {
         ])
     }
 
-    fn handle_math(&mut self, op: Operation) -> Result<Vec<usize>> {
+    fn handle_zero_operands(&mut self, op: Operation) -> Result<Vec<usize>> {
         let variants = [Variant::None, Variant::None, Variant::None];
         Ok(vec![OpCode::new(op, variants).as_usize()])
     }
@@ -245,6 +251,48 @@ impl Assembler {
         }
     }
 
+    fn handle_call(&mut self) -> Result<Vec<usize>> {
+        let operand = self.capture_operand()?;
+        match operand {
+            Operand::Label(label) => {
+                if let Some(pos) = self.labels.get(&label) {
+                    let variants = [Variant::Direct, Variant::None, Variant::None];
+
+                    Ok(vec![
+                        OpCode::new(Operation::Call, variants).as_usize(),
+                        *pos,
+                    ])
+                } else {
+                    self.unresolved_labels.push(UnresolvedLabel {
+                        label,
+                        location: self.program.len(),
+                        // not the operand
+                        span: self.current.span.clone(),
+                    });
+                    let variants = [Variant::Direct, Variant::None, Variant::None];
+                    Ok(vec![OpCode::new(Operation::Call, variants).as_usize(), 0])
+                }
+            }
+            Operand::Native(name) => {
+                let variants = [Variant::Native, Variant::None, Variant::None];
+                Ok(vec![
+                    OpCode::new(Operation::Call, variants).as_usize(),
+                    NativeFunctions::from_string(&name).with_context(|| {
+                        error_at!(self.current.span, "Unknown native function {}", name)
+                    })? as usize,
+                ])
+            }
+            _ => {
+                let variants = [operand.as_variant()?, Variant::None, Variant::None];
+
+                Ok(vec![
+                    OpCode::new(Operation::Call, variants).as_usize(),
+                    operand.as_usize()?,
+                ])
+            }
+        }
+    }
+
     pub fn resolve_labels(&mut self) -> Result<()> {
         for label in &self.unresolved_labels {
             let label_loc = self
@@ -263,6 +311,7 @@ enum Operand {
     Direct(usize),
     Stack(usize),
     Label(String),
+    Native(String),
 }
 
 impl Operand {
@@ -271,6 +320,7 @@ impl Operand {
             Operand::Register(_) => Ok(Variant::Register),
             Operand::Direct(_) => Ok(Variant::Direct),
             Operand::Stack(_) => Ok(Variant::Stack),
+            Operand::Native(_) => Ok(Variant::Native),
             _ => Err(anyhow!("Operand cant be a variant")),
         }
     }
@@ -287,6 +337,7 @@ impl Operand {
     pub fn as_string(&self) -> Result<String> {
         match self {
             Operand::Label(s) => Ok(s.clone()),
+            Operand::Native(s) => Ok(s.clone()),
             _ => Err(anyhow!("Operand cant be a string")),
         }
     }

@@ -67,6 +67,7 @@ impl Lexer {
             ')' => Some(Token::new(TokenType::RParen, span, c.to_string())),
             ',' => Some(Token::new(TokenType::Comma, span, c.to_string())),
             '.' => Some(Token::new(TokenType::Dot, span, c.to_string())),
+            '$' => Some(Token::new(TokenType::Dollar, span, c.to_string())),
             // '+' => Some(Token::new(TokenType::Plus, span, c.to_string())),
             // '-' => Some(Token::new(TokenType::Minus, span, c.to_string())),
             // '*' => Some(Token::new(TokenType::Multiply, span, c.to_string())),

@@ -1,0 +1,11 @@
+  push 50
+  push 60
+  call $print
+
+  call .add_two_numbers
+
+  call $exit
+
+.add_two_numbers:
+  add
+  ret

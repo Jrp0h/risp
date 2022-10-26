@@ -17,6 +17,7 @@ impl Operand {
             Variant::Stack => format!("s({})", self.value),
             Variant::Register => format!("r({})", self.value),
             Variant::Direct => format!("{}", self.value),
+            Variant::Native => format!("${}", self.value), // TODO: Look up native function name from number
             Variant::None | Variant::Indirect => "".to_string(),
         }
     }
@@ -110,8 +111,16 @@ impl ProgramParser {
             Some(Operation::Div) => self.collect_zero(&opcode),
             Some(Operation::Mov) => self.collect_two(&opcode),
             Some(Operation::Jmp) => self.collect_one(&opcode),
+            Some(Operation::JmpEq) => self.collect_one(&opcode),
+            Some(Operation::JmpNe) => self.collect_one(&opcode),
+            Some(Operation::JmpGt) => self.collect_one(&opcode),
+            Some(Operation::JmpLt) => self.collect_one(&opcode),
+            Some(Operation::JmpGte) => self.collect_one(&opcode),
+            Some(Operation::JmpLte) => self.collect_one(&opcode),
             Some(Operation::Dup) => self.collect_one(&opcode),
             Some(Operation::Cmp) => self.collect_two(&opcode),
+            Some(Operation::Call) => self.collect_one(&opcode),
+            Some(Operation::Ret) => self.collect_zero(&opcode),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }
