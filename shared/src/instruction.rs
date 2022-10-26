@@ -12,6 +12,13 @@ pub enum Operation {
     Mult = 8,
     Div = 9,
     Cmp = 10,
+
+    JmpEq = 11,
+    JmpNe = 12,
+    JmpGt = 13,
+    JmpLt = 14,
+    JmpGte = 15,
+    JmpLte = 16,
 }
 
 impl Operation {
@@ -28,6 +35,12 @@ impl Operation {
             8 => Some(Operation::Mult),
             9 => Some(Operation::Div),
             10 => Some(Operation::Cmp),
+            11 => Some(Operation::JmpEq),
+            12 => Some(Operation::JmpNe),
+            13 => Some(Operation::JmpGt),
+            14 => Some(Operation::JmpLt),
+            15 => Some(Operation::JmpGte),
+            16 => Some(Operation::JmpLte),
             _ => None,
         }
     }
@@ -45,6 +58,12 @@ impl Operation {
             "mult" => Some(Operation::Mult),
             "div" => Some(Operation::Div),
             "cmp" => Some(Operation::Cmp),
+            "jmp_eq" => Some(Operation::JmpEq),
+            "jmp_ne" => Some(Operation::JmpNe),
+            "jmp_gt" => Some(Operation::JmpGt),
+            "jmp_lt" => Some(Operation::JmpLt),
+            "jmp_gte" => Some(Operation::JmpGte),
+            "jmp_lte" => Some(Operation::JmpLte),
             _ => None,
         }
     }
@@ -62,6 +81,12 @@ impl Operation {
             Operation::Mult => "mult",
             Operation::Div => "div",
             Operation::Cmp => "cmp",
+            Operation::JmpEq => "jmp_eq",
+            Operation::JmpNe => "jmp_ne",
+            Operation::JmpGt => "jmp_gt",
+            Operation::JmpLt => "jmp_lt",
+            Operation::JmpGte => "jmp_gte",
+            Operation::JmpLte => "jmp_lte",
         }
     }
 }

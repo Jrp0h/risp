@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use shared::instruction::{OpCode, Operation, Variant};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum CmpResult {
     Equal,
     LessThan,
@@ -51,9 +51,15 @@ impl VM {
             Some(Operation::Sub) => self.op_sub(),
             Some(Operation::Div) => self.op_div(),
             Some(Operation::Mov) => self.op_mov(&opcode),
-            Some(Operation::Jmp) => self.op_jmp(&opcode),
             Some(Operation::Dup) => self.op_dup(&opcode),
             Some(Operation::Cmp) => self.op_cmp(&opcode),
+            Some(Operation::Jmp) => self.op_jmp(&opcode, Operation::Jmp),
+            Some(Operation::JmpEq) => self.op_jmp(&opcode, Operation::JmpEq),
+            Some(Operation::JmpNe) => self.op_jmp(&opcode, Operation::JmpNe),
+            Some(Operation::JmpGt) => self.op_jmp(&opcode, Operation::JmpGt),
+            Some(Operation::JmpLt) => self.op_jmp(&opcode, Operation::JmpLt),
+            Some(Operation::JmpGte) => self.op_jmp(&opcode, Operation::JmpGte),
+            Some(Operation::JmpLte) => self.op_jmp(&opcode, Operation::JmpLte),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }
@@ -187,10 +193,47 @@ impl VM {
         self.stack.pop();
     }
 
-    fn op_jmp(&mut self, op: &OpCode) {
+    fn op_jmp(&mut self, op: &OpCode, operation: Operation) {
         let variant = op.variants().unwrap()[0];
         let value = self.advance().unwrap();
-        self.pc = self.value_from_variant(variant, value).unwrap();
+
+        match operation {
+            Operation::Jmp => {
+                self.pc = self.value_from_variant(variant, value).unwrap();
+            }
+            Operation::JmpEq => {
+                if self.cmp == CmpResult::Equal {
+                    self.pc = self.value_from_variant(variant, value).unwrap();
+                }
+            }
+            Operation::JmpNe => {
+                if self.cmp != CmpResult::Equal {
+                    self.pc = self.value_from_variant(variant, value).unwrap();
+                }
+            }
+            Operation::JmpGt => {
+                if self.cmp == CmpResult::GreaterThan {
+                    self.pc = self.value_from_variant(variant, value).unwrap();
+                }
+            }
+            Operation::JmpLt => {
+                if self.cmp == CmpResult::LessThan {
+                    self.pc = self.value_from_variant(variant, value).unwrap();
+                }
+            }
+
+            Operation::JmpGte => {
+                if self.cmp == CmpResult::GreaterThan || self.cmp == CmpResult::Equal {
+                    self.pc = self.value_from_variant(variant, value).unwrap();
+                }
+            }
+            Operation::JmpLte => {
+                if self.cmp == CmpResult::LessThan || self.cmp == CmpResult::Equal {
+                    self.pc = self.value_from_variant(variant, value).unwrap();
+                }
+            }
+            other => panic!("{:?} isn't a jmp operation", other),
+        }
     }
     fn op_dup(&mut self, op: &OpCode) {
         let variant = op.variants().unwrap()[0];

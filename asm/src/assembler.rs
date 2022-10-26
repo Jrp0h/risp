@@ -105,7 +105,13 @@ impl Assembler {
             "sub" => self.handle_math(Operation::Sub),
             "mult" => self.handle_math(Operation::Mult),
             "div" => self.handle_math(Operation::Div),
-            "jmp" => self.handle_jmp(),
+            "jmp" => self.handle_jmp(Operation::Jmp),
+            "jmp_eq" => self.handle_jmp(Operation::JmpEq),
+            "jmp_ne" => self.handle_jmp(Operation::JmpNe),
+            "jmp_gt" => self.handle_jmp(Operation::JmpGt),
+            "jmp_lt" => self.handle_jmp(Operation::JmpLt),
+            "jmp_gte" => self.handle_jmp(Operation::JmpGte),
+            "jmp_lte" => self.handle_jmp(Operation::JmpLte),
             "cmp" => self.handle_cmp(),
             other => Err(error_at!(
                 self.current.span,
@@ -207,14 +213,15 @@ impl Assembler {
         Ok(vec![OpCode::new(op, variants).as_usize()])
     }
 
-    fn handle_jmp(&mut self) -> Result<Vec<usize>> {
+    fn handle_jmp(&mut self, op: Operation) -> Result<Vec<usize>> {
+        // self.eat(TokenType::Identifier)?;
         let operand = self.capture_operand()?;
         match operand {
             Operand::Label(label) => {
                 if let Some(pos) = self.labels.get(&label) {
                     let variants = [Variant::Direct, Variant::None, Variant::None];
 
-                    Ok(vec![OpCode::new(Operation::Jmp, variants).as_usize(), *pos])
+                    Ok(vec![OpCode::new(op, variants).as_usize(), *pos])
                 } else {
                     self.unresolved_labels.push(UnresolvedLabel {
                         label,
@@ -223,14 +230,14 @@ impl Assembler {
                         span: self.current.span.clone(),
                     });
                     let variants = [Variant::Direct, Variant::None, Variant::None];
-                    Ok(vec![OpCode::new(Operation::Jmp, variants).as_usize(), 17])
+                    Ok(vec![OpCode::new(op, variants).as_usize(), 17])
                 }
             }
             _ => {
                 let variants = [operand.as_variant()?, Variant::None, Variant::None];
 
                 Ok(vec![
-                    OpCode::new(Operation::Jmp, variants).as_usize(),
+                    OpCode::new(op, variants).as_usize(),
                     operand.as_usize()?,
                 ])
             }
