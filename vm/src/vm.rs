@@ -50,6 +50,7 @@ impl VM {
             Some(Operation::Mult) => self.op_mult(),
             Some(Operation::Sub) => self.op_sub(),
             Some(Operation::Div) => self.op_div(),
+            Some(Operation::Mod) => self.op_mod(),
             Some(Operation::Mov) => self.op_mov(&opcode),
             Some(Operation::Dup) => self.op_dup(&opcode),
             Some(Operation::Cmp) => self.op_cmp(&opcode),
@@ -143,6 +144,11 @@ impl VM {
         let rhs = self.stack.pop().unwrap();
         let lhs = self.stack.pop().unwrap();
         self.stack.push(lhs / rhs);
+    }
+    fn op_mod(&mut self) {
+        let rhs = self.stack.pop().unwrap();
+        let lhs = self.stack.pop().unwrap();
+        self.stack.push(lhs % rhs);
     }
 
     fn op_push(&mut self, op: &OpCode) {

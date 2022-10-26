@@ -105,6 +105,7 @@ impl Assembler {
             "sub" => self.handle_math(Operation::Sub),
             "mult" => self.handle_math(Operation::Mult),
             "div" => self.handle_math(Operation::Div),
+            "mod" => self.handle_math(Operation::Mod),
             "jmp" => self.handle_jmp(Operation::Jmp),
             "jmp_eq" => self.handle_jmp(Operation::JmpEq),
             "jmp_ne" => self.handle_jmp(Operation::JmpNe),

@@ -19,6 +19,8 @@ pub enum Operation {
     JmpLt = 14,
     JmpGte = 15,
     JmpLte = 16,
+
+    Mod = 17,
 }
 
 impl Operation {
@@ -41,6 +43,7 @@ impl Operation {
             14 => Some(Operation::JmpLt),
             15 => Some(Operation::JmpGte),
             16 => Some(Operation::JmpLte),
+            17 => Some(Operation::Mod),
             _ => None,
         }
     }
@@ -64,6 +67,7 @@ impl Operation {
             "jmp_lt" => Some(Operation::JmpLt),
             "jmp_gte" => Some(Operation::JmpGte),
             "jmp_lte" => Some(Operation::JmpLte),
+            "mod" => Some(Operation::Mod),
             _ => None,
         }
     }
@@ -87,6 +91,7 @@ impl Operation {
             Operation::JmpLt => "jmp_lt",
             Operation::JmpGte => "jmp_gte",
             Operation::JmpLte => "jmp_lte",
+            Operation::Mod => "jmp_lte",
         }
     }
 }
