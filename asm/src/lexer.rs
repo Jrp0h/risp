@@ -143,7 +143,10 @@ impl Lexer {
         let start_line = self.current_line;
         let start_col = self.current_column;
 
-        while self.current_as_char().is_alphanumeric() {
+        while self.current_as_char().is_alphanumeric()
+            || self.current_as_char() == '_'
+            || self.current_as_char() == '-'
+        {
             string.push(self.current_as_char());
             self.advance();
         }

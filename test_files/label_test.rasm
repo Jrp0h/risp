@@ -1,0 +1,8 @@
+  jmp .skip_first
+  push 5
+  push 10
+  add
+.skip_first:
+  push 10
+  push 20
+  add

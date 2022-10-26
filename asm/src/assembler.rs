@@ -2,10 +2,24 @@ use std::{collections::HashMap, iter::Peekable};
 
 use crate::{
     lexer::Lexer,
-    token::{Token, TokenType},
+    token::{Token, TokenSpan, TokenType},
 };
 use anyhow::{anyhow, Context, Result};
 use shared::instruction::{OpCode, Operation, Variant};
+
+macro_rules! error_at {
+    ($loc:expr, $msg:expr,  $($items:expr),*) => {{
+        let msg = format!($msg, $($items),*);
+        let msg = format!("{}, at {}:{}:{}", msg, $loc.file, $loc.start_line, $loc.start_column);
+        anyhow::anyhow!(msg)
+    }
+    };
+    ($loc:expr, $msg:expr) => {{
+        let msg = format!("{}, at {}:{}:{}", $msg, $loc.file, $loc.start_line, $loc.start_column);
+        anyhow::anyhow!(msg)
+    }
+    };
+}
 
 #[derive(Debug)]
 pub struct Assembler {
@@ -13,6 +27,7 @@ pub struct Assembler {
     current: Token,
 
     labels: HashMap<String, usize>,
+    unresolved_labels: Vec<UnresolvedLabel>,
     program: Vec<usize>,
 }
 
@@ -24,6 +39,7 @@ impl Assembler {
             lexer: lexer.peekable(),
             current,
             labels: HashMap::new(),
+            unresolved_labels: Vec::new(),
             program: vec![],
         })
     }
@@ -34,7 +50,7 @@ impl Assembler {
         self.current = self
             .lexer
             .next()
-            .with_context(|| format!("Ran out of tokens"))?;
+            .with_context(|| error_at!(self.current.span, "Ran out of tokens"))?;
         Ok(old)
     }
 
@@ -42,13 +58,11 @@ impl Assembler {
         if self.current.r#type == expected {
             self.advance()
         } else {
-            Err(anyhow!(
-                "Expected {:?} but got {:?} at {}:{}:{}",
+            Err(error_at!(
+                self.current.span,
+                "Expected {:?} but got {:?}",
                 expected,
-                self.current.r#type,
-                self.current.span.file,
-                self.current.span.start_line,
-                self.current.span.start_column,
+                self.current.r#type
             ))
         }
     }
@@ -58,6 +72,8 @@ impl Assembler {
             let mut instructions = self.next()?;
             self.program.append(&mut instructions);
         }
+
+        self.resolve_labels()?;
 
         Ok(self.program.clone())
     }
@@ -87,7 +103,11 @@ impl Assembler {
             "dup" => self.handle_dup(),
             "add" => self.handle_add(),
             "jmp" => self.handle_jmp(),
-            other => Err(anyhow!("Unknown instruction {}", other)),
+            other => Err(error_at!(
+                self.current.span,
+                "Unknown instruction {}",
+                other
+            )),
         }
     }
 
@@ -96,10 +116,9 @@ impl Assembler {
 
         match current.r#type {
             TokenType::Number => {
-                let num = current
-                    .value
-                    .parse::<usize>()
-                    .with_context(|| format!("{} is not a valid number", current.value))?;
+                let num = current.value.parse::<usize>().with_context(|| {
+                    error_at!(self.current.span, "{} is not a valid number", current.value)
+                })?;
                 Ok(Operand::Direct(num))
             }
             TokenType::Identifier => {
@@ -114,14 +133,22 @@ impl Assembler {
                 match id.value.as_str() {
                     "s" => Ok(Operand::Stack(num)),
                     "r" => Ok(Operand::Register(num)),
-                    other => Err(anyhow!("Unknown operation '{:?}'", other)),
+                    other => Err(error_at!(
+                        self.current.span,
+                        "Unknown operation '{:?}'",
+                        other
+                    )),
                 }
             }
             TokenType::Dot => {
                 let label = self.eat(TokenType::Identifier)?;
                 Ok(Operand::Label(label.value))
             }
-            other => Err(anyhow!("Operand cant start with {:?}", other)),
+            other => Err(error_at!(
+                self.current.span,
+                "Operand cant start with {:?}",
+                other
+            )),
         }
     }
 
@@ -172,7 +199,14 @@ impl Assembler {
 
                     Ok(vec![OpCode::new(Operation::Jmp, variants).as_usize(), *pos])
                 } else {
-                    todo!("Not found labels not implemented yet")
+                    self.unresolved_labels.push(UnresolvedLabel {
+                        label,
+                        location: self.program.len() + 1, // +1 for +0 is where the operation goes,
+                        // not the operand
+                        span: self.current.span.clone(),
+                    });
+                    let variants = [Variant::Direct, Variant::None, Variant::None];
+                    Ok(vec![OpCode::new(Operation::Jmp, variants).as_usize(), 17])
                 }
             }
             _ => {
@@ -184,6 +218,18 @@ impl Assembler {
                 ])
             }
         }
+    }
+
+    pub fn resolve_labels(&mut self) -> Result<()> {
+        for label in &self.unresolved_labels {
+            let label_loc = self
+                .labels
+                .get(&label.label)
+                .with_context(|| error_at!(label.span, "Couldn't find label '{}'", label.label))?;
+            self.program[label.location] = *label_loc;
+        }
+
+        Ok(())
     }
 }
 
@@ -219,4 +265,11 @@ impl Operand {
             _ => Err(anyhow!("Operand cant be a string")),
         }
     }
+}
+
+#[derive(Debug)]
+struct UnresolvedLabel {
+    pub label: String,
+    pub location: usize,
+    pub span: TokenSpan,
 }

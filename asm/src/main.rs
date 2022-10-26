@@ -9,7 +9,7 @@ mod lexer;
 mod token;
 
 fn main() {
-    let lexer = Lexer::new_from_path("test_files/add.asm".to_string());
+    let lexer = Lexer::new_from_path("test_files/label_test.rasm".to_string());
     // let tokens: Vec<Token> = lexer.collect();
     // println!("{:#?}", tokens);
     let mut asm = Assembler::new(lexer).unwrap();
