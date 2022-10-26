@@ -1,4 +1,12 @@
+use anyhow::{anyhow, Result};
 use shared::instruction::{OpCode, Operation, Variant};
+
+#[derive(Debug)]
+pub enum CmpResult {
+    Equal,
+    LessThan,
+    GreaterThan,
+}
 
 pub struct VM {
     program: Vec<usize>,
@@ -6,6 +14,7 @@ pub struct VM {
     pc: usize,
     stack: Vec<usize>,
     register: [usize; 10],
+    cmp: CmpResult,
 }
 
 impl VM {
@@ -15,6 +24,7 @@ impl VM {
             pc: 0,
             stack: vec![],
             register: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            cmp: CmpResult::Equal,
         }
     }
 
@@ -43,6 +53,7 @@ impl VM {
             Some(Operation::Mov) => self.op_mov(&opcode),
             Some(Operation::Jmp) => self.op_jmp(&opcode),
             Some(Operation::Dup) => self.op_dup(&opcode),
+            Some(Operation::Cmp) => self.op_cmp(&opcode),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }
@@ -74,13 +85,22 @@ impl VM {
         }
     }
 
+    fn value_from_variant(&self, variant: Variant, value: usize) -> Result<usize> {
+        match variant {
+            Variant::Direct => Ok(value),
+            Variant::Register => Ok(self.register[value]),
+            Variant::Stack => Ok(self.stack[self.stack.len() - (value + 1)]),
+            other => Err(anyhow!("Can't get value from variant {:?}", other)),
+        }
+    }
+
     pub fn dump(&self) {
         println!("Stack:");
         self.dump_stack();
 
         println!("\nRegisters:");
         self.dump_registers();
-        println!()
+        println!("\nCmp Result: {:#?}", self.cmp);
     }
 
     pub fn dump_stack(&self) {
@@ -173,6 +193,7 @@ impl VM {
 
     fn op_jmp(&mut self, op: &OpCode) {
         let variant = op.variants().unwrap()[0];
+
         match variant {
             Variant::Direct => {
                 self.pc = self.advance().unwrap();
@@ -202,6 +223,26 @@ impl VM {
                 self.stack.push(self.stack[self.stack.len() - (value + 1)])
             }
             other => panic!("Invalid dup variant ({:?})", other),
+        }
+    }
+
+    fn op_cmp(&mut self, op: &OpCode) {
+        let v = self.advance().unwrap();
+        let lhs = self
+            .value_from_variant(op.variants().unwrap()[0], v)
+            .unwrap();
+
+        let v = self.advance().unwrap();
+        let rhs = self
+            .value_from_variant(op.variants().unwrap()[1], v)
+            .unwrap();
+
+        if lhs > rhs {
+            self.cmp = CmpResult::GreaterThan;
+        } else if lhs < rhs {
+            self.cmp = CmpResult::LessThan;
+        } else {
+            self.cmp = CmpResult::Equal;
         }
     }
 }

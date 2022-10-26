@@ -106,6 +106,7 @@ impl Assembler {
             "mult" => self.handle_math(Operation::Mult),
             "div" => self.handle_math(Operation::Div),
             "jmp" => self.handle_jmp(),
+            "cmp" => self.handle_cmp(),
             other => Err(error_at!(
                 self.current.span,
                 "Unknown instruction {}",
@@ -163,6 +164,19 @@ impl Assembler {
 
         Ok(vec![
             OpCode::new(Operation::Mov, variants).as_usize(),
+            first.as_usize()?,
+            second.as_usize()?,
+        ])
+    }
+
+    fn handle_cmp(&mut self) -> Result<Vec<usize>> {
+        let first = self.capture_operand()?;
+        self.eat(TokenType::Comma)?;
+        let second = self.capture_operand()?;
+        let variants = [first.as_variant()?, second.as_variant()?, Variant::None];
+
+        Ok(vec![
+            OpCode::new(Operation::Cmp, variants).as_usize(),
             first.as_usize()?,
             second.as_usize()?,
         ])

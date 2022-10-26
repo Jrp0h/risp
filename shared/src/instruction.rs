@@ -11,6 +11,7 @@ pub enum Operation {
     Sub = 7,
     Mult = 8,
     Div = 9,
+    Cmp = 10,
 }
 
 impl Operation {
@@ -26,6 +27,7 @@ impl Operation {
             7 => Some(Operation::Sub),
             8 => Some(Operation::Mult),
             9 => Some(Operation::Div),
+            10 => Some(Operation::Cmp),
             _ => None,
         }
     }
@@ -42,6 +44,7 @@ impl Operation {
             "sub" => Some(Operation::Sub),
             "mult" => Some(Operation::Mult),
             "div" => Some(Operation::Div),
+            "cmp" => Some(Operation::Cmp),
             _ => None,
         }
     }
@@ -58,6 +61,7 @@ impl Operation {
             Operation::Sub => "sub",
             Operation::Mult => "mult",
             Operation::Div => "div",
+            Operation::Cmp => "div",
         }
     }
 }
@@ -91,10 +95,10 @@ pub struct OpCode(usize);
 impl OpCode {
     pub fn new(operation: Operation, variants: [Variant; 3]) -> Self {
         // TODO: Make operation 5bits
-        let mut code = (operation as usize) << (4 * 4);
-        code |= (variants[0] as usize) << (4 * 2);
-        code |= (variants[1] as usize) << (4 * 1);
-        code |= (variants[2] as usize) << (4 * 0);
+        let mut code = (operation as usize) << (8 * 4);
+        code |= (variants[0] as usize) << (8 * 2);
+        code |= (variants[1] as usize) << (8 * 1);
+        code |= (variants[2] as usize) << (8 * 0);
 
         OpCode(code)
     }
@@ -104,14 +108,14 @@ impl OpCode {
     }
 
     pub fn operation(&self) -> Option<Operation> {
-        Operation::from_usize(self.0 >> 4 * 4)
+        Operation::from_usize(self.0 >> 8 * 4)
     }
 
     pub fn variants(&self) -> Option<[Variant; 3]> {
         Some([
-            Variant::from_usize((self.0 >> 4 * 2) & 0b1111)?,
-            Variant::from_usize((self.0 >> 4 * 1) & 0b1111)?,
-            Variant::from_usize((self.0 >> 4 * 0) & 0b1111)?,
+            Variant::from_usize((self.0 >> 8 * 2) & 0b1111)?,
+            Variant::from_usize((self.0 >> 8 * 1) & 0b1111)?,
+            Variant::from_usize((self.0 >> 8 * 0) & 0b1111)?,
         ])
     }
 

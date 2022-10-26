@@ -111,6 +111,7 @@ impl ProgramParser {
             Some(Operation::Mov) => self.collect_two(&opcode),
             Some(Operation::Jmp) => self.collect_one(&opcode),
             Some(Operation::Dup) => self.collect_one(&opcode),
+            Some(Operation::Cmp) => self.collect_two(&opcode),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }
