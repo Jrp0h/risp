@@ -101,7 +101,10 @@ impl Assembler {
             "mov" => self.handle_mov(),
             "push" => self.handle_push(),
             "dup" => self.handle_dup(),
-            "add" => self.handle_add(),
+            "add" => self.handle_math(Operation::Add),
+            "sub" => self.handle_math(Operation::Sub),
+            "mult" => self.handle_math(Operation::Mult),
+            "div" => self.handle_math(Operation::Div),
             "jmp" => self.handle_jmp(),
             other => Err(error_at!(
                 self.current.span,
@@ -185,9 +188,9 @@ impl Assembler {
         ])
     }
 
-    fn handle_add(&mut self) -> Result<Vec<usize>> {
+    fn handle_math(&mut self, op: Operation) -> Result<Vec<usize>> {
         let variants = [Variant::None, Variant::None, Variant::None];
-        Ok(vec![OpCode::new(Operation::Add, variants).as_usize()])
+        Ok(vec![OpCode::new(op, variants).as_usize()])
     }
 
     fn handle_jmp(&mut self) -> Result<Vec<usize>> {

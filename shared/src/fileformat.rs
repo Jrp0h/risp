@@ -3,7 +3,7 @@ use std::{
     io::{Read, Write},
 };
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 
 pub struct FileFormat {
     pub program: Vec<usize>,

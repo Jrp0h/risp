@@ -2,24 +2,30 @@
 #[repr(u8)]
 pub enum Operation {
     Nop = 0,
-    Add = 1,
-    Push = 2,
-    Pop = 3,
-    Mov = 4,
-    Jmp = 5,
-    Dup = 6,
+    Push = 1,
+    Pop = 2,
+    Mov = 3,
+    Jmp = 4,
+    Dup = 5,
+    Add = 6,
+    Sub = 7,
+    Mult = 8,
+    Div = 9,
 }
 
 impl Operation {
     pub fn from_usize(value: usize) -> Option<Operation> {
         match value {
             0 => Some(Operation::Nop),
-            1 => Some(Operation::Add),
-            2 => Some(Operation::Push),
-            3 => Some(Operation::Pop),
-            4 => Some(Operation::Mov),
-            5 => Some(Operation::Jmp),
-            6 => Some(Operation::Dup),
+            1 => Some(Operation::Push),
+            2 => Some(Operation::Pop),
+            3 => Some(Operation::Mov),
+            4 => Some(Operation::Jmp),
+            5 => Some(Operation::Dup),
+            6 => Some(Operation::Add),
+            7 => Some(Operation::Sub),
+            8 => Some(Operation::Mult),
+            9 => Some(Operation::Div),
             _ => None,
         }
     }
@@ -27,12 +33,15 @@ impl Operation {
     pub fn from_asm(value: &str) -> Option<Operation> {
         match value {
             "nop" => Some(Operation::Nop),
-            "add" => Some(Operation::Add),
             "push" => Some(Operation::Push),
             "pop" => Some(Operation::Pop),
             "mov" => Some(Operation::Mov),
             "jmp" => Some(Operation::Jmp),
             "dup" => Some(Operation::Dup),
+            "add" => Some(Operation::Add),
+            "sub" => Some(Operation::Sub),
+            "mult" => Some(Operation::Mult),
+            "div" => Some(Operation::Div),
             _ => None,
         }
     }
@@ -40,12 +49,15 @@ impl Operation {
     pub fn to_asm(&self) -> &'static str {
         match self {
             Operation::Nop => "nop",
-            Operation::Add => "add",
             Operation::Push => "push",
             Operation::Pop => "pop",
             Operation::Mov => "mov",
             Operation::Jmp => "jmp",
             Operation::Dup => "dup",
+            Operation::Add => "add",
+            Operation::Sub => "sub",
+            Operation::Mult => "mult",
+            Operation::Div => "div",
         }
     }
 }
