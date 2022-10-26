@@ -36,6 +36,7 @@ impl Lexer {
         let c = self.data[self.i];
         if c == '\n' {
             self.current_line += 1;
+            self.current_column = 0;
         }
     }
 
@@ -58,21 +59,21 @@ impl Lexer {
 
         match c {
             ':' => Some(Token::new(TokenType::Colon, span, c.to_string())),
-            // '=' => Some(Token::new(TokenType::Equal, span, c.to_string())),
-            // '{' => Some(Token::new(TokenType::LeftBrace, span, c.to_string())),
-            // '}' => Some(Token::new(TokenType::RightBrace, span, c.to_string())),
-            // '[' => Some(Token::new(TokenType::LeftBracket, span, c.to_string())),
-            // ']' => Some(Token::new(TokenType::RightBracket, span, c.to_string())),
+            '=' => Some(Token::new(TokenType::Equal, span, c.to_string())),
+            '{' => Some(Token::new(TokenType::LCurly, span, c.to_string())),
+            '}' => Some(Token::new(TokenType::RCurly, span, c.to_string())),
             '(' => Some(Token::new(TokenType::LParen, span, c.to_string())),
             ')' => Some(Token::new(TokenType::RParen, span, c.to_string())),
             ',' => Some(Token::new(TokenType::Comma, span, c.to_string())),
             '.' => Some(Token::new(TokenType::Dot, span, c.to_string())),
             '$' => Some(Token::new(TokenType::Dollar, span, c.to_string())),
-            // '+' => Some(Token::new(TokenType::Plus, span, c.to_string())),
-            // '-' => Some(Token::new(TokenType::Minus, span, c.to_string())),
-            // '*' => Some(Token::new(TokenType::Multiply, span, c.to_string())),
-            // '/' => Some(Token::new(TokenType::Divide, span, c.to_string())),
-            // ';' => Some(Token::new(TokenType::SemiColon, span, c.to_string())),
+            '+' => Some(Token::new(TokenType::Plus, span, c.to_string())),
+            '-' => Some(Token::new(TokenType::Dash, span, c.to_string())),
+            '*' => Some(Token::new(TokenType::Times, span, c.to_string())),
+            '/' => Some(Token::new(TokenType::Slash, span, c.to_string())),
+            '<' => Some(Token::new(TokenType::LessThan, span, c.to_string())),
+            '>' => Some(Token::new(TokenType::GreaterThan, span, c.to_string())),
+            '%' => Some(Token::new(TokenType::Percent, span, c.to_string())),
             _ => None,
         }
     }

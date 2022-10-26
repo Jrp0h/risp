@@ -1,0 +1,9 @@
+(defun main {
+  (print 5)
+  (exit)
+})
+
+; (defun main {
+;   (defvar $number 10)
+;   (print $number)
+; }) 

@@ -1,5 +1,6 @@
 use asm::assembler::Assembler;
-use shared::{lexer::Lexer, program::ProgramParser};
+use risp::parser::Parser;
+use shared::{lexer::Lexer, program::ProgramParser, token::Token};
 use vm::vm::VM;
 
 pub struct RunArgs {
@@ -16,7 +17,15 @@ pub fn run(args: RunArgs) {
         let lexer = Lexer::new_from_path(args.filepath.to_string());
         let mut asm = Assembler::new(lexer).unwrap();
         program = asm.assemble().unwrap();
+    } else if args.filepath.ends_with(".risp") {
+        // Lisp
+        let lexer = Lexer::new_from_path(args.filepath.to_string());
+        // let tokens: Vec<Token> = lexer.collect();
+        let ast = Parser::parse(lexer).unwrap();
+        println!("{:#?}", ast);
+        todo!("Risp Parser");
     } else {
+        // Bin
         program = shared::fileformat::FileFormat::from_file(args.filepath)
             .unwrap()
             .program;
