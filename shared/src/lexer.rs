@@ -195,10 +195,14 @@ impl Iterator for Lexer {
         while self.i < self.data.len() {
             self.skip_whitespace();
 
-            if self.current_as_char() == '/' && self.peek_as_char() == '/' {
+            if self.current_as_char() == ';' {
                 self.skip_comment();
-                continue;
             }
+
+            // if self.current_as_char() == '/' && self.peek_as_char() == '/' {
+            //     self.skip_comment();
+            //     continue;
+            // }
 
             if let Some(token) = self.get_char_token() {
                 self.advance();

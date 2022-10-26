@@ -61,7 +61,7 @@ impl Operation {
             Operation::Sub => "sub",
             Operation::Mult => "mult",
             Operation::Div => "div",
-            Operation::Cmp => "div",
+            Operation::Cmp => "cmp",
         }
     }
 }
