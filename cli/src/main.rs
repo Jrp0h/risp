@@ -1,7 +1,9 @@
 use clap::{Parser, Subcommand};
 use run::RunArgs;
+use shared::program::ProgramParser;
 
 mod compile;
+mod disassemble;
 mod run;
 
 #[derive(Parser)]
@@ -16,16 +18,22 @@ enum Commands {
     Run {
         file: String,
 
-        #[arg(short, long)]
+        #[arg(short = 'm', long)]
         max_instructions: Option<usize>,
 
-        #[arg(short, long)]
+        #[arg(short = 'd', long)]
         dump: bool,
     },
     Compile {
         input_path: String,
 
-        #[arg(short, long)]
+        #[arg(short = 'o', long)]
+        output_path: Option<String>,
+    },
+    Disassemble {
+        input_path: String,
+
+        #[arg(short = 'o', long)]
         output_path: Option<String>,
     },
 }
@@ -54,5 +62,12 @@ fn main() {
                 output_path: output_path.clone(),
             });
         }
+        Commands::Disassemble {
+            input_path,
+            output_path,
+        } => disassemble::disassemble(disassemble::DisassembleArgs {
+            input_path: input_path.to_string(),
+            output_path: output_path.clone(),
+        }),
     }
 }

@@ -1,5 +1,5 @@
 use asm::assembler::Assembler;
-use shared::lexer::Lexer;
+use shared::{lexer::Lexer, program::ProgramParser};
 use vm::vm::VM;
 
 pub struct RunArgs {
