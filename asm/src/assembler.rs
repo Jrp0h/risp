@@ -146,6 +146,7 @@ impl Assembler {
                 self.eat(TokenType::RParen)?;
                 match id.value.as_str() {
                     "s" => Ok(Operand::Stack(num)),
+                    "sr" => Ok(Operand::StackRelative(num)),
                     "r" => Ok(Operand::Register(num)),
                     other => Err(error_at!(
                         self.current.span,
@@ -311,6 +312,7 @@ enum Operand {
     Register(usize),
     Direct(usize),
     Stack(usize),
+    StackRelative(usize),
     Label(String),
     Native(String),
 }
@@ -321,6 +323,7 @@ impl Operand {
             Operand::Register(_) => Ok(Variant::Register),
             Operand::Direct(_) => Ok(Variant::Direct),
             Operand::Stack(_) => Ok(Variant::Stack),
+            Operand::StackRelative(_) => Ok(Variant::StackRelative),
             Operand::Native(_) => Ok(Variant::Native),
             _ => Err(anyhow!("Operand cant be a variant")),
         }
@@ -331,6 +334,7 @@ impl Operand {
             Operand::Register(v) => Ok(*v),
             Operand::Direct(v) => Ok(*v),
             Operand::Stack(v) => Ok(*v),
+            Operand::StackRelative(v) => Ok(*v),
             _ => Err(anyhow!("Operand cant be a usize")),
         }
     }

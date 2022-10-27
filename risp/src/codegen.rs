@@ -7,7 +7,7 @@ use shared::{
 use std::collections::HashMap;
 
 use crate::{
-    ast::{BinOp, Block, Call, FunctionDefinition, If, Return, VariableDefinition, AST},
+    ast::{BinOp, Block, Call, FromTo, FunctionDefinition, If, Return, VariableDefinition, AST},
     variable_stack::VariableStack,
 };
 macro_rules! variants {
@@ -60,11 +60,13 @@ impl CodeGen {
         }
     }
 
-    fn stack_push(&mut self, variant: Variant, value: usize) {
+    fn stack_push(&mut self, variant: Variant, value: usize) -> usize {
         self.program
             .push(OpCode::new(Operation::Push, [variant, Variant::None, Variant::None]).as_usize());
         self.program.push(value);
         self.stack_size += 1;
+
+        return self.stack_size - 1;
     }
 
     fn stack_pop(&mut self) {
@@ -155,6 +157,9 @@ impl CodeGen {
             }
             AST::If(ef) => {
                 self.generate_if(ef)?;
+            }
+            AST::FromTo(ft) => {
+                self.generate_from_to(ft)?;
             }
             other => todo!("Implement {:?}", other),
         }
@@ -283,6 +288,53 @@ impl CodeGen {
         }
 
         self.program[jmp_to_end_addr] = self.program.len();
+
+        Ok(())
+    }
+
+    pub fn generate_from_to(&mut self, ft: &FromTo) -> Result<()> {
+        let value = self.generate_statement(&(*ft.start))?;
+        let start = value.with_context(|| anyhow!("start must evaluate to a value"))?;
+
+        let value = self.generate_statement(&(*ft.finish))?;
+        let finish = value.with_context(|| anyhow!("finish must evaluate to a value"))?;
+
+        // push start
+        let var = self.stack_push(start.variant, start.value); // current var
+
+        let loop_start = self.program.len();
+        // push current and finish
+        self.stack_push(Variant::StackRelative, var);
+        self.stack_push(finish.variant, finish.value);
+
+        //cmp
+        self.program.push(op!(CmpLt));
+        self.program.push(op!(Not));
+        self.program.push(op!(JmpIf, Direct));
+        self.program.push(0);
+        let end_addr = self.program.len() - 1;
+
+        // Generate action
+        self.generate_block(&ft.block)?;
+
+        // add
+        self.stack_push(Variant::StackRelative, var);
+        self.stack_push(Variant::Direct, 1);
+        self.program.push(op!(Add));
+
+        self.program.push(op!(Mov, StackRelative, Stack));
+        self.program.push(var);
+        self.program.push(0);
+        self.stack_pop(); // cmp
+        self.stack_pop(); // negated
+
+        // Jump back
+        self.program.push(op!(Jmp, Direct));
+        self.program.push(loop_start);
+
+        self.program[end_addr] = self.program.len();
+        self.stack_pop(); // current
+        self.stack_pop(); // start
 
         Ok(())
     }

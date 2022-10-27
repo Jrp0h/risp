@@ -93,6 +93,7 @@ impl VM {
             Variant::Direct => Ok(value),
             Variant::Register => Ok(self.register[value]),
             Variant::Stack => Ok(self.stack[self.stack.len() - (value + 1)]),
+            Variant::StackRelative => Ok(self.stack[value]),
             other => Err(anyhow!("Can't get value from variant {:?}", other)),
         }
     }
@@ -159,6 +160,11 @@ impl VM {
             }
             Variant::Stack => {
                 let value = self.advance().unwrap();
+                let len = self.stack.len();
+                self.stack.push(self.stack[len - (value + 1)]);
+            }
+            Variant::StackRelative => {
+                let value = self.advance().unwrap();
                 self.stack.push(self.stack[value as usize])
             }
             other => panic!("Invalid push variant ({:?})", other),
@@ -181,6 +187,9 @@ impl VM {
             Variant::Stack => {
                 let len = self.stack.len();
                 self.stack[len - (where_value + 1)] = what;
+            }
+            Variant::StackRelative => {
+                self.stack[where_value] = what;
             }
             other => panic!("Invalid mov variant ({:?})", other),
         }

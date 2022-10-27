@@ -116,7 +116,8 @@ pub enum Variant {
     Direct = 2,
     Indirect = 3,
     Stack = 4,
-    Native = 5,
+    StackRelative = 5,
+    Native = 6,
 }
 
 impl Variant {
@@ -127,7 +128,8 @@ impl Variant {
             2 => Some(Variant::Direct),
             3 => Some(Variant::Indirect),
             4 => Some(Variant::Stack),
-            5 => Some(Variant::Native),
+            5 => Some(Variant::StackRelative),
+            6 => Some(Variant::Native),
             _ => None,
         }
     }

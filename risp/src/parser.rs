@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 
 use crate::ast::{
-    Block, Call, FunctionDefinition, Identifier, If, Return, VariableDefinition, AST,
+    Block, Call, FromTo, FunctionDefinition, Identifier, If, Return, VariableDefinition, AST,
 };
 use shared::lexer::Lexer;
 use shared::token::{Token, TokenType};
@@ -203,6 +203,7 @@ impl Parser {
             "setvar" => self.parse_set_variable(),
             "return" => self.parse_return(),
             "if" => self.parse_if(),
+            "from" => self.parse_from_to(),
             "print" | "exit" => self.parse_function_call(), // Native Functions
             _ => self.parse_function_call(),
         }
@@ -251,5 +252,19 @@ impl Parser {
         }
 
         Ok(AST::Root(Block { statements }))
+    }
+
+    fn parse_from_to(&mut self) -> Result<AST> {
+        self.eat(TokenType::Identifier)?; // from
+        let start = self.parse_number_binop_variable_or_statement()?;
+        self.eat(TokenType::Identifier)?; // to
+        let finish = self.parse_number_binop_variable_or_statement()?;
+        let block = self.parse_block()?;
+
+        Ok(AST::FromTo(FromTo {
+            start: Box::new(start),
+            finish: Box::new(finish),
+            block,
+        }))
     }
 }

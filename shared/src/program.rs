@@ -15,6 +15,7 @@ impl Operand {
     pub fn format(&self) -> String {
         match self.variant {
             Variant::Stack => format!("s({})", self.value),
+            Variant::StackRelative => format!("sr({})", self.value),
             Variant::Register => format!("r({})", self.value),
             Variant::Direct => format!("{}", self.value),
             Variant::Native => format!(

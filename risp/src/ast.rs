@@ -19,6 +19,7 @@ pub enum AST {
     Return(Return),
 
     If(If),
+    FromTo(FromTo),
 }
 
 #[derive(Debug)]
@@ -78,4 +79,11 @@ pub struct If {
     pub cond: Box<AST>,
     pub then: Block,
     pub r#else: Option<Block>,
+}
+
+#[derive(Debug)]
+pub struct FromTo {
+    pub start: Box<AST>,
+    pub finish: Box<AST>,
+    pub block: Block,
 }
