@@ -22,7 +22,7 @@ pub fn run(args: RunArgs) {
         let lexer = Lexer::new_from_path(args.filepath.to_string());
         // let tokens: Vec<Token> = lexer.collect();
         let ast = Parser::parse(lexer).unwrap();
-        // println!("{:#?}", ast);
+        println!("{:#?}", ast);
         let bytecode = CodeGen::new().generate(ast).unwrap();
         program = bytecode.clone();
 

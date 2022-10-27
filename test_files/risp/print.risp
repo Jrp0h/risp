@@ -4,10 +4,7 @@
 ; })
 
 (defun main {
-  (defvar $number 10)
-  (defvar $number2 20)
-  (defvar $number3 30)
-  (setvar $number2 100)
-  (setvar $number2 $number2)
-  (print $number2)
+  (defvar $test 7)
+  (defvar $number (+ 50 (* $test 10)))
+  (print $number)
 })

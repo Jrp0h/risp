@@ -2,11 +2,12 @@ use anyhow::{anyhow, Context, Result};
 use shared::{
     instruction::{NativeFunctions, OpCode, Operation, Variant},
     program::Operand,
+    token::TokenType,
 };
 use std::collections::HashMap;
 
 use crate::{
-    ast::{Block, Call, FunctionDefinition, VariableDefinition, AST},
+    ast::{BinOp, Block, Call, FunctionDefinition, VariableDefinition, AST},
     variable_stack::VariableStack,
 };
 macro_rules! variants {
@@ -123,6 +124,10 @@ impl CodeGen {
                     .with_context(|| format!("Unknown variable {}", var.name))?;
                 return Ok(Some(Operand::new(v, Variant::Stack)));
             }
+            AST::BinOp(binop) => {
+                self.generate_binop(binop)?;
+                return Ok(Some(Operand::new(0, Variant::Register)));
+            }
             other => todo!("Implement {:?}", other),
         }
 
@@ -145,7 +150,7 @@ impl CodeGen {
 
         for (i, var) in definition.variables.iter().enumerate() {
             self.variable_stack
-                .create(var.name.clone(), self.stack_size - i);
+                .create(var.name.clone(), self.stack_size - i)?;
         }
 
         self.generate_block(&definition.block)?;
@@ -186,6 +191,38 @@ impl CodeGen {
         } else {
             self.program.push(value.value);
         }
+
+        Ok(())
+    }
+
+    pub fn generate_binop(&mut self, binop: &BinOp) -> Result<()> {
+        let value = self.generate_statement(&(*binop.lhs))?;
+        let lhs = value.with_context(|| anyhow!("LHS must evaluate to a value"))?;
+
+        let value = self.generate_statement(&(*binop.rhs))?;
+        let rhs = value.with_context(|| anyhow!("RHS must evaluate to a value"))?;
+
+        self.stack_push(lhs.variant, lhs.value);
+        self.stack_push(rhs.variant, rhs.value);
+
+        match binop.op {
+            TokenType::Plus => self.program.push(op!(Add)),
+            TokenType::Dash => self.program.push(op!(Sub)),
+            TokenType::Times => self.program.push(op!(Mult)),
+            TokenType::Slash => self.program.push(op!(Div)),
+            TokenType::Percent => self.program.push(op!(Mod)),
+            TokenType::Equal | TokenType::LessThan | TokenType::GreaterThan => {
+                todo!("BinOp codegen comparison")
+            }
+            other => return Err(anyhow!("{:?} isn't a valid binary operation", other)),
+        }
+
+        self.stack_size -= 1; // all binops removes one from the stack
+
+        self.program.push(op!(Mov, Register, Stack));
+        self.program.push(0);
+        self.program.push(0);
+        self.stack_pop();
 
         Ok(())
     }

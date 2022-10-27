@@ -66,10 +66,18 @@ impl Parser {
     }
 
     fn parse_binop(&mut self) -> Result<AST> {
-        todo!("Implement")
+        let op = self.advance();
+        let lhs = self.parse_number_binop_variable_or_statement()?;
+        let rhs = self.parse_number_binop_variable_or_statement()?;
+
+        Ok(AST::BinOp(crate::ast::BinOp {
+            lhs: Box::new(lhs),
+            op: op.r#type,
+            rhs: Box::new(rhs),
+        }))
     }
 
-    fn parse_number_variable_or_statement(&mut self) -> Result<AST> {
+    fn parse_number_binop_variable_or_statement(&mut self) -> Result<AST> {
         match self.current.r#type {
             TokenType::Number => {
                 let value = self.eat(TokenType::Number)?;
@@ -93,7 +101,7 @@ impl Parser {
         let name = self.eat(TokenType::Identifier)?; // ex print
         let mut args = vec![];
         while self.current.r#type != TokenType::RParen {
-            args.push(Box::new(self.parse_number_variable_or_statement()?));
+            args.push(Box::new(self.parse_number_binop_variable_or_statement()?));
         }
         Ok(AST::Call(Call {
             id: Identifier { name: name.value },
@@ -135,7 +143,7 @@ impl Parser {
         self.eat(TokenType::Dollar)?; // $
         let id = self.eat(TokenType::Identifier)?; // ex num
 
-        let value = self.parse_number_variable_or_statement()?;
+        let value = self.parse_number_binop_variable_or_statement()?;
         Ok(AST::VariableDefinition(VariableDefinition {
             id: Identifier { name: id.value },
             value: Box::new(value),
@@ -147,7 +155,7 @@ impl Parser {
         self.eat(TokenType::Dollar)?; // $
         let id = self.eat(TokenType::Identifier)?; // ex num
 
-        let value = self.parse_number_variable_or_statement()?;
+        let value = self.parse_number_binop_variable_or_statement()?;
         Ok(AST::VariableSet(VariableDefinition {
             id: Identifier { name: id.value },
             value: Box::new(value),

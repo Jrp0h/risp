@@ -1,3 +1,5 @@
+use shared::token::TokenType;
+
 #[derive(Debug)]
 pub enum AST {
     Root(Block), // Only for proc definitions and import
@@ -12,6 +14,8 @@ pub enum AST {
     FunctionDefinition(FunctionDefinition),
 
     Call(Call),
+
+    BinOp(BinOp),
 }
 
 #[derive(Debug)]
@@ -52,4 +56,11 @@ pub struct FunctionDefinition {
     pub id: Identifier,
     pub variables: Vec<Identifier>,
     pub block: Block,
+}
+
+#[derive(Debug)]
+pub struct BinOp {
+    pub lhs: Box<AST>,
+    pub rhs: Box<AST>,
+    pub op: TokenType, // TODO: Make this its own thing
 }
