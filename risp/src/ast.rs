@@ -17,6 +17,8 @@ pub enum AST {
 
     BinOp(BinOp),
     Return(Return),
+
+    If(If),
 }
 
 #[derive(Debug)]
@@ -69,4 +71,11 @@ pub struct BinOp {
 #[derive(Debug)]
 pub struct Return {
     pub value: Box<AST>,
+}
+
+#[derive(Debug)]
+pub struct If {
+    pub cond: Box<AST>,
+    pub then: Block,
+    pub r#else: Option<Block>,
 }

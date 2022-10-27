@@ -56,6 +56,7 @@ impl VM {
             Some(Operation::CmpLte) => self.op_cmp(&opcode, Operation::CmpLte),
             Some(Operation::Call) => return self.op_call(&opcode),
             Some(Operation::Ret) => self.op_ret(),
+            Some(Operation::Not) => self.op_not(),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }
@@ -190,15 +191,18 @@ impl VM {
     }
 
     fn op_cmp(&mut self, op: &OpCode, operation: Operation) {
-        let v = self.advance().unwrap();
-        let lhs = self
-            .value_from_variant(op.variants().unwrap()[0], v)
-            .unwrap();
+        // let v = self.advance().unwrap();
+        // let lhs = self
+        //     .value_from_variant(op.variants().unwrap()[0], v)
+        //     .unwrap();
 
-        let v = self.advance().unwrap();
-        let rhs = self
-            .value_from_variant(op.variants().unwrap()[1], v)
-            .unwrap();
+        // let v = self.advance().unwrap();
+        // let rhs = self
+        //     .value_from_variant(op.variants().unwrap()[1], v)
+        //     .unwrap();
+
+        let rhs = self.stack.pop().unwrap();
+        let lhs = self.stack.pop().unwrap();
 
         match operation {
             Operation::CmpEq => {
@@ -261,6 +265,11 @@ impl VM {
 
     fn op_ret(&mut self) {
         self.pc = self.call_stack.pop().unwrap();
+    }
+
+    fn op_not(&mut self) {
+        let res = self.stack.pop().unwrap() == 0;
+        self.stack.push(res as usize);
     }
 
     fn op_jmp(&mut self, op: &OpCode, operation: Operation) {

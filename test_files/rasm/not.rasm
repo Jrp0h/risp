@@ -1,0 +1,25 @@
+cmp_eq 10, 15
+call $print
+not
+call $print
+
+
+cond:
+  <inst>
+  <inst>
+  <inst>
+  <inst>
+  not
+  jmp_if .else
+.then:
+  <inst>
+  <inst>
+  <inst>
+  <inst>
+  jmp .end
+.else:
+  <inst>
+  <inst>
+  <inst>
+  <inst>
+.end:

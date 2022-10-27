@@ -23,6 +23,7 @@ pub enum Operation {
     Mod = 17,
     Call = 18,
     Ret = 19,
+    Not = 20,
 }
 
 impl Operation {
@@ -48,6 +49,7 @@ impl Operation {
             17 => Some(Operation::Mod),
             18 => Some(Operation::Call),
             19 => Some(Operation::Ret),
+            20 => Some(Operation::Not),
             _ => None,
         }
     }
@@ -74,6 +76,7 @@ impl Operation {
             "mod" => Some(Operation::Mod),
             "call" => Some(Operation::Call),
             "ret" => Some(Operation::Ret),
+            "not" => Some(Operation::Not),
             _ => None,
         }
     }
@@ -100,6 +103,7 @@ impl Operation {
             Operation::Mod => "mod",
             Operation::Call => "call",
             Operation::Ret => "ret",
+            Operation::Not => "not",
         }
     }
 }

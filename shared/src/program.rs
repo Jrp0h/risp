@@ -128,6 +128,7 @@ impl ProgramParser {
             Some(Operation::Dup) => self.collect_one(&opcode),
             Some(Operation::Call) => self.collect_one(&opcode),
             Some(Operation::Ret) => self.collect_zero(&opcode),
+            Some(Operation::Not) => self.collect_zero(&opcode),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }

@@ -7,7 +7,7 @@ use shared::{
 use std::collections::HashMap;
 
 use crate::{
-    ast::{BinOp, Block, Call, FunctionDefinition, Return, VariableDefinition, AST},
+    ast::{BinOp, Block, Call, FunctionDefinition, If, Return, VariableDefinition, AST},
     variable_stack::VariableStack,
 };
 macro_rules! variants {
@@ -153,6 +153,9 @@ impl CodeGen {
             AST::Return(ret) => {
                 self.generate_return(ret)?;
             }
+            AST::If(ef) => {
+                self.generate_if(ef)?;
+            }
             other => todo!("Implement {:?}", other),
         }
 
@@ -235,9 +238,9 @@ impl CodeGen {
             TokenType::Times => self.program.push(op!(Mult)),
             TokenType::Slash => self.program.push(op!(Div)),
             TokenType::Percent => self.program.push(op!(Mod)),
-            TokenType::Equal | TokenType::LessThan | TokenType::GreaterThan => {
-                todo!("BinOp codegen comparison")
-            }
+            TokenType::Equal => self.program.push(op!(CmpEq)),
+            TokenType::LessThan => self.program.push(op!(CmpLt)),
+            TokenType::GreaterThan => self.program.push(op!(CmpGt)),
             other => return Err(anyhow!("{:?} isn't a valid binary operation", other)),
         }
 
@@ -256,6 +259,31 @@ impl CodeGen {
         let value = value.with_context(|| anyhow!("return must evaluate to a value"))?;
         self.stack_push(value.variant, value.value);
         self.program.push(op!(Ret));
+        Ok(())
+    }
+
+    pub fn generate_if(&mut self, ef: &If) -> Result<()> {
+        let value = self.generate_statement(&(*ef.cond))?;
+        let cond = value.with_context(|| anyhow!("condition must evaluate to a value"))?;
+        self.stack_push(cond.variant, cond.value);
+
+        self.program.push(op!(Not));
+        self.program.push(op!(JmpIf, Direct));
+        self.program.push(0);
+        let jmp_to_else_addr = self.program.len() - 1;
+
+        self.generate_block(&ef.then)?;
+        self.program.push(op!(Jmp, Direct));
+        self.program.push(10);
+        let jmp_to_end_addr = self.program.len() - 1;
+
+        self.program[jmp_to_else_addr] = self.program.len();
+        if let Some(else_block) = &ef.r#else {
+            self.generate_block(else_block)?;
+        }
+
+        self.program[jmp_to_end_addr] = self.program.len();
+
         Ok(())
     }
 }

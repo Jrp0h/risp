@@ -116,6 +116,7 @@ impl Assembler {
             "cmp_lte" => self.handle_cmp(Operation::CmpLte),
             "call" => self.handle_call(),
             "ret" => self.handle_zero_operands(Operation::Ret),
+            "not" => self.handle_zero_operands(Operation::Not),
             other => Err(error_at!(
                 self.current.span,
                 "Unknown instruction {}",
@@ -183,15 +184,15 @@ impl Assembler {
     }
 
     fn handle_cmp(&mut self, op: Operation) -> Result<Vec<usize>> {
-        let first = self.capture_operand()?;
-        self.eat(TokenType::Comma)?;
-        let second = self.capture_operand()?;
-        let variants = [first.as_variant()?, second.as_variant()?, Variant::None];
+        // let first = self.capture_operand()?;
+        // self.eat(TokenType::Comma)?;
+        // let second = self.capture_operand()?;
+        // let variants = [first.as_variant()?, second.as_variant()?, Variant::None];
 
         Ok(vec![
-            OpCode::new(op, variants).as_usize(),
-            first.as_usize()?,
-            second.as_usize()?,
+            OpCode::new(op, [Variant::None, Variant::None, Variant::None]).as_usize(),
+            // first.as_usize()?,
+            // second.as_usize()?,
         ])
     }
 

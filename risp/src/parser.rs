@@ -1,6 +1,8 @@
 use std::iter::Peekable;
 
-use crate::ast::{Block, Call, FunctionDefinition, Identifier, Return, VariableDefinition, AST};
+use crate::ast::{
+    Block, Call, FunctionDefinition, Identifier, If, Return, VariableDefinition, AST,
+};
 use shared::lexer::Lexer;
 use shared::token::{Token, TokenType};
 
@@ -118,6 +120,29 @@ impl Parser {
         }))
     }
 
+    fn parse_if(&mut self) -> Result<AST> {
+        self.eat(TokenType::Identifier)?; // if
+        let cond = self.parse_number_binop_variable_or_statement()?;
+        let then = self.parse_block()?;
+
+        if self.current.r#type == TokenType::Identifier {
+            self.eat(TokenType::Identifier)?; // else
+            let elze = self.parse_block()?;
+
+            Ok(AST::If(If {
+                cond: Box::new(cond),
+                then,
+                r#else: Some(elze),
+            }))
+        } else {
+            Ok(AST::If(If {
+                cond: Box::new(cond),
+                then,
+                r#else: None,
+            }))
+        }
+    }
+
     fn parse_block(&mut self) -> Result<Block> {
         self.eat(TokenType::LCurly)?;
         let statements = self.parse_statements()?;
@@ -177,6 +202,7 @@ impl Parser {
             "defvar" => self.parse_variable_definition(),
             "setvar" => self.parse_set_variable(),
             "return" => self.parse_return(),
+            "if" => self.parse_if(),
             "print" | "exit" => self.parse_function_call(), // Native Functions
             _ => self.parse_function_call(),
         }
