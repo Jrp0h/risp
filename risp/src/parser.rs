@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use crate::ast::{Block, Call, FunctionDefinition, Identifier, VariableDefinition, AST};
+use crate::ast::{Block, Call, FunctionDefinition, Identifier, Return, VariableDefinition, AST};
 use shared::lexer::Lexer;
 use shared::token::{Token, TokenType};
 
@@ -109,6 +109,15 @@ impl Parser {
         }))
     }
 
+    fn parse_return(&mut self) -> Result<AST> {
+        self.eat(TokenType::Identifier)?; // return
+        let value = self.parse_number_binop_variable_or_statement()?;
+        // TODO: allow empty return
+        Ok(AST::Return(Return {
+            value: Box::new(value),
+        }))
+    }
+
     fn parse_block(&mut self) -> Result<Block> {
         self.eat(TokenType::LCurly)?;
         let statements = self.parse_statements()?;
@@ -167,9 +176,9 @@ impl Parser {
             "defun" => self.parse_function_definition(),
             "defvar" => self.parse_variable_definition(),
             "setvar" => self.parse_set_variable(),
-            "print" => self.parse_function_call(),
-            "exit" => self.parse_function_call(),
-            _ => todo!("Not implemented yet"),
+            "return" => self.parse_return(),
+            "print" | "exit" => self.parse_function_call(), // Native Functions
+            _ => self.parse_function_call(),
         }
     }
 

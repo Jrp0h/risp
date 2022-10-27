@@ -11,10 +11,10 @@ pub struct VM {
 }
 
 impl VM {
-    pub fn new(program: Vec<usize>) -> Self {
+    pub fn new(program: Vec<usize>, entry: usize) -> Self {
         Self {
             program,
-            pc: 0,
+            pc: entry,
             stack: vec![],
             call_stack: vec![],
             register: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

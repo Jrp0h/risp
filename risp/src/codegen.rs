@@ -7,7 +7,7 @@ use shared::{
 use std::collections::HashMap;
 
 use crate::{
-    ast::{BinOp, Block, Call, FunctionDefinition, VariableDefinition, AST},
+    ast::{BinOp, Block, Call, FunctionDefinition, Return, VariableDefinition, AST},
     variable_stack::VariableStack,
 };
 macro_rules! variants {
@@ -34,11 +34,19 @@ macro_rules! op {
     };
 }
 
+#[derive(Debug)]
+struct UnresolvedFunction {
+    pub name: String,
+    pub location: usize,
+}
+
 pub struct CodeGen {
     program: Vec<usize>,
     variable_stack: VariableStack,
     functions: HashMap<String, usize>,
     stack_size: usize,
+
+    unresolved_function: Vec<UnresolvedFunction>,
 }
 
 impl CodeGen {
@@ -48,6 +56,7 @@ impl CodeGen {
             variable_stack: VariableStack::new(),
             functions: HashMap::new(),
             stack_size: 0,
+            unresolved_function: vec![],
         }
     }
 
@@ -63,7 +72,7 @@ impl CodeGen {
         self.stack_size -= 1;
     }
 
-    pub fn generate(&mut self, ast: AST) -> Result<Vec<usize>> {
+    pub fn generate(&mut self, ast: AST) -> Result<(Vec<usize>, usize)> {
         match ast {
             AST::Root(block) => {
                 self.generate_block(&block)?;
@@ -71,7 +80,20 @@ impl CodeGen {
             other => return Err(anyhow!("Root must be root, is currently {:?}", other)),
         }
 
-        Ok(self.program.clone())
+        for func in &self.unresolved_function {
+            if let Some(addr) = self.functions.get(&func.name) {
+                self.program[func.location] = *addr;
+            } else {
+                return Err(anyhow!("Unknown function {}", func.name));
+            }
+        }
+
+        let entry = self
+            .functions
+            .get("main")
+            .with_context(|| anyhow!("main function not defined"))?;
+
+        Ok((self.program.clone(), *entry))
     }
 
     pub fn generate_call(&mut self, call: &Call) -> Result<()> {
@@ -88,16 +110,16 @@ impl CodeGen {
             self.program.push(func as usize);
         } else {
             self.program.push(op!(Call, Direct));
-            let func = self
-                .functions
-                .get(&call.id.name)
-                .expect("TODO: Implement unresolved functions");
-            self.program.push(*func);
-        }
 
-        // Pop the args
-        for _ in &call.args {
-            self.stack_pop();
+            if let Some(v) = self.functions.get(&call.id.name) {
+                self.program.push(*v);
+            } else {
+                self.unresolved_function.push(UnresolvedFunction {
+                    name: call.id.name.clone(),
+                    location: self.program.len(),
+                });
+                self.program.push(0);
+            }
         }
 
         Ok(())
@@ -128,6 +150,9 @@ impl CodeGen {
                 self.generate_binop(binop)?;
                 return Ok(Some(Operand::new(0, Variant::Register)));
             }
+            AST::Return(ret) => {
+                self.generate_return(ret)?;
+            }
             other => todo!("Implement {:?}", other),
         }
 
@@ -146,11 +171,10 @@ impl CodeGen {
         self.variable_stack.enter();
         // TODO: Validate that the function isnt already defined
         self.functions
-            .insert(definition.id.name.clone(), self.program.len() + 1);
+            .insert(definition.id.name.clone(), self.program.len());
 
         for (i, var) in definition.variables.iter().enumerate() {
-            self.variable_stack
-                .create(var.name.clone(), self.stack_size - i)?;
+            self.variable_stack.create(var.name.clone(), i)?;
         }
 
         self.generate_block(&definition.block)?;
@@ -224,6 +248,14 @@ impl CodeGen {
         self.program.push(0);
         self.stack_pop();
 
+        Ok(())
+    }
+
+    pub fn generate_return(&mut self, ret: &Return) -> Result<()> {
+        let value = self.generate_statement(&(*ret.value))?;
+        let value = value.with_context(|| anyhow!("return must evaluate to a value"))?;
+        self.stack_push(value.variant, value.value);
+        self.program.push(op!(Ret));
         Ok(())
     }
 }

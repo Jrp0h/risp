@@ -11,6 +11,7 @@ pub struct RunArgs {
 
 pub fn run(args: RunArgs) {
     let program;
+    let mut entry = 0;
 
     if args.filepath.ends_with(".rasm") {
         // Assembly
@@ -22,7 +23,8 @@ pub fn run(args: RunArgs) {
         let lexer = Lexer::new_from_path(args.filepath.to_string());
         let ast = Parser::parse(lexer).unwrap();
         let bytecode = CodeGen::new().generate(ast).unwrap();
-        program = bytecode.clone();
+        program = bytecode.0.clone();
+        entry = bytecode.1;
     } else {
         // Bin
         program = shared::fileformat::FileFormat::from_file(args.filepath)
@@ -30,7 +32,7 @@ pub fn run(args: RunArgs) {
             .program;
     }
 
-    let mut vm = VM::new(program);
+    let mut vm = VM::new(program, entry);
 
     if let Some(max) = args.max_instructions {
         vm.run_max(max);

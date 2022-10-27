@@ -31,6 +31,9 @@ enum Commands {
 
         #[arg(long)]
         ast: bool,
+
+        #[arg(long)]
+        asm: bool,
     },
     Disassemble {
         input_path: String,
@@ -59,11 +62,13 @@ fn main() {
             input_path,
             output_path,
             ast,
+            asm,
         } => {
             compile::compile(compile::CompileArgs {
                 input_path: input_path.to_string(),
                 output_path: output_path.clone(),
                 ast: *ast,
+                asm: *asm,
             });
         }
         Commands::Disassemble {

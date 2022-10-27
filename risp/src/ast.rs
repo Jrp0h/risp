@@ -16,6 +16,7 @@ pub enum AST {
     Call(Call),
 
     BinOp(BinOp),
+    Return(Return),
 }
 
 #[derive(Debug)]
@@ -63,4 +64,9 @@ pub struct BinOp {
     pub lhs: Box<AST>,
     pub rhs: Box<AST>,
     pub op: TokenType, // TODO: Make this its own thing
+}
+
+#[derive(Debug)]
+pub struct Return {
+    pub value: Box<AST>,
 }
