@@ -107,13 +107,13 @@ impl Assembler {
             "div" => self.handle_zero_operands(Operation::Div),
             "mod" => self.handle_zero_operands(Operation::Mod),
             "jmp" => self.handle_jmp(Operation::Jmp),
-            "jmp_eq" => self.handle_jmp(Operation::JmpEq),
-            "jmp_ne" => self.handle_jmp(Operation::JmpNe),
-            "jmp_gt" => self.handle_jmp(Operation::JmpGt),
-            "jmp_lt" => self.handle_jmp(Operation::JmpLt),
-            "jmp_gte" => self.handle_jmp(Operation::JmpGte),
-            "jmp_lte" => self.handle_jmp(Operation::JmpLte),
-            "cmp" => self.handle_cmp(),
+            "jmp_if" => self.handle_jmp(Operation::JmpIf),
+            "cmp_eq" => self.handle_cmp(Operation::CmpEq),
+            "cmp_ne" => self.handle_cmp(Operation::CmpNe),
+            "cmp_gt" => self.handle_cmp(Operation::CmpGt),
+            "cmp_lt" => self.handle_cmp(Operation::CmpLt),
+            "cmp_gte" => self.handle_cmp(Operation::CmpGte),
+            "cmp_lte" => self.handle_cmp(Operation::CmpLte),
             "call" => self.handle_call(),
             "ret" => self.handle_zero_operands(Operation::Ret),
             other => Err(error_at!(
@@ -182,14 +182,14 @@ impl Assembler {
         ])
     }
 
-    fn handle_cmp(&mut self) -> Result<Vec<usize>> {
+    fn handle_cmp(&mut self, op: Operation) -> Result<Vec<usize>> {
         let first = self.capture_operand()?;
         self.eat(TokenType::Comma)?;
         let second = self.capture_operand()?;
         let variants = [first.as_variant()?, second.as_variant()?, Variant::None];
 
         Ok(vec![
-            OpCode::new(Operation::Cmp, variants).as_usize(),
+            OpCode::new(op, variants).as_usize(),
             first.as_usize()?,
             second.as_usize()?,
         ])

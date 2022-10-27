@@ -1,22 +1,11 @@
+push 70
 push 60
-push 50
-cmp s(1), s(0)
+cmp_gt s(1), s(0)
 
-jmp_eq .eq
-jmp_ne .ne
-jmp_gt .gt
+jmp_if .p
 jmp .end
 
-.eq:
-add
-jmp .end
-
-.gt:
-sub
-jmp .end
-
-.ne:
-mod
-jmp .end
+.p:
+  call $print
 
 .end:
