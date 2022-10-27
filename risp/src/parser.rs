@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 
 use crate::ast::{
-    Block, Call, FromTo, FunctionDefinition, Identifier, If, Return, VariableDefinition, AST,
+    Block, Call, FromTo, FunctionDefinition, Identifier, If, Return, VariableDefinition, While, AST,
 };
 use shared::lexer::Lexer;
 use shared::token::{Token, TokenType};
@@ -204,6 +204,7 @@ impl Parser {
             "return" => self.parse_return(),
             "if" => self.parse_if(),
             "from" => self.parse_from_to(),
+            "while" => self.parse_while_statement(),
             "print" | "exit" => self.parse_function_call(), // Native Functions
             _ => self.parse_function_call(),
         }
@@ -265,6 +266,17 @@ impl Parser {
             start: Box::new(start),
             finish: Box::new(finish),
             block,
+        }))
+    }
+
+    fn parse_while_statement(&mut self) -> Result<AST> {
+        self.eat(TokenType::Identifier)?; // if
+        let cond = self.parse_number_binop_variable_or_statement()?;
+        let then = self.parse_block()?;
+
+        Ok(AST::While(While {
+            cond: Box::new(cond),
+            then,
         }))
     }
 }

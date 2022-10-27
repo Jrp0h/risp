@@ -20,6 +20,7 @@ pub enum AST {
 
     If(If),
     FromTo(FromTo),
+    While(While),
 }
 
 #[derive(Debug)]
@@ -86,4 +87,10 @@ pub struct FromTo {
     pub start: Box<AST>,
     pub finish: Box<AST>,
     pub block: Block,
+}
+
+#[derive(Debug)]
+pub struct While {
+    pub cond: Box<AST>,
+    pub then: Block,
 }

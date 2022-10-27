@@ -4,8 +4,9 @@
 ; })
 
 (defun main {
-  (from 50 to 55 {
-    (print 10)
+  (defvar $i 0)
+  (while (< $i 3) {
+    (setvar $i (+ $i 1))
     ; /* (print 10) */
   })
   (exit)

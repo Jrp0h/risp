@@ -7,7 +7,9 @@ use shared::{
 use std::collections::HashMap;
 
 use crate::{
-    ast::{BinOp, Block, Call, FromTo, FunctionDefinition, If, Return, VariableDefinition, AST},
+    ast::{
+        BinOp, Block, Call, FromTo, FunctionDefinition, If, Return, VariableDefinition, While, AST,
+    },
     variable_stack::VariableStack,
 };
 macro_rules! variants {
@@ -146,21 +148,16 @@ impl CodeGen {
                     .variable_stack
                     .get(var.name.clone())
                     .with_context(|| format!("Unknown variable {}", var.name))?;
-                return Ok(Some(Operand::new(v, Variant::Stack)));
+                return Ok(Some(Operand::new(v, Variant::StackRelative)));
             }
             AST::BinOp(binop) => {
                 self.generate_binop(binop)?;
                 return Ok(Some(Operand::new(0, Variant::Register)));
             }
-            AST::Return(ret) => {
-                self.generate_return(ret)?;
-            }
-            AST::If(ef) => {
-                self.generate_if(ef)?;
-            }
-            AST::FromTo(ft) => {
-                self.generate_from_to(ft)?;
-            }
+            AST::Return(ret) => self.generate_return(ret)?,
+            AST::If(ef) => self.generate_if(ef)?,
+            AST::While(wile) => self.generate_while(wile)?,
+            AST::FromTo(ft) => self.generate_from_to(ft)?,
             other => todo!("Implement {:?}", other),
         }
 
@@ -212,12 +209,12 @@ impl CodeGen {
         self.program.push(
             OpCode::new(
                 Operation::Mov,
-                [Variant::Stack, value.variant, Variant::None],
+                [Variant::StackRelative, value.variant, Variant::None],
             )
             .as_usize(),
         );
 
-        self.program.push(self.stack_size - variable - 1);
+        self.program.push(variable);
         if value.variant == Variant::Stack {
             self.program.push(self.stack_size - value.value - 1);
         } else {
@@ -268,6 +265,7 @@ impl CodeGen {
     }
 
     pub fn generate_if(&mut self, ef: &If) -> Result<()> {
+        self.variable_stack.enter();
         let value = self.generate_statement(&(*ef.cond))?;
         let cond = value.with_context(|| anyhow!("condition must evaluate to a value"))?;
         self.stack_push(cond.variant, cond.value);
@@ -289,10 +287,12 @@ impl CodeGen {
 
         self.program[jmp_to_end_addr] = self.program.len();
 
+        self.variable_stack.leave()?;
         Ok(())
     }
 
     pub fn generate_from_to(&mut self, ft: &FromTo) -> Result<()> {
+        self.variable_stack.enter();
         let value = self.generate_statement(&(*ft.start))?;
         let start = value.with_context(|| anyhow!("start must evaluate to a value"))?;
 
@@ -336,6 +336,30 @@ impl CodeGen {
         self.stack_pop(); // current
         self.stack_pop(); // start
 
+        self.variable_stack.leave();
+        Ok(())
+    }
+
+    pub fn generate_while(&mut self, wile: &While) -> Result<()> {
+        self.variable_stack.enter();
+        let start_addr = self.program.len();
+
+        let value = self.generate_statement(&(*wile.cond))?;
+        let cond = value.with_context(|| anyhow!("condition must evaluate to a value"))?;
+        self.stack_push(cond.variant, cond.value);
+
+        self.program.push(op!(Not));
+        self.program.push(op!(JmpIf, Direct));
+        self.program.push(0);
+        let jmp_to_end_addr = self.program.len() - 1;
+
+        self.generate_block(&wile.then)?;
+        self.program.push(op!(Jmp, Direct));
+        self.program.push(start_addr);
+
+        self.program[jmp_to_end_addr] = self.program.len();
+
+        self.variable_stack.leave()?;
         Ok(())
     }
 }
