@@ -115,6 +115,7 @@ impl CodeGen {
             }
             AST::FunctionDefinition(func) => self.generate_function(func)?,
             AST::VariableDefinition(var) => self.generate_variable_definition(var)?,
+            AST::VariableSet(var) => self.generate_set_variable(var)?,
             AST::Variable(var) => {
                 let v = self
                     .variable_stack
@@ -144,7 +145,7 @@ impl CodeGen {
 
         for (i, var) in definition.variables.iter().enumerate() {
             self.variable_stack
-                .set(var.name.clone(), self.stack_size - i);
+                .create(var.name.clone(), self.stack_size - i);
         }
 
         self.generate_block(&definition.block)?;
@@ -159,6 +160,33 @@ impl CodeGen {
         let value = value.with_context(|| anyhow!("Variable definition must be a value"))?;
 
         self.stack_push(value.variant, value.value);
+        Ok(())
+    }
+
+    pub fn generate_set_variable(&mut self, definition: &VariableDefinition) -> Result<()> {
+        let variable = self
+            .variable_stack
+            .get(definition.id.name.clone())
+            .with_context(|| anyhow!("Unknown variable {}", definition.id.name))?;
+
+        let value = self.generate_statement(&(*definition.value))?;
+        let value = value.with_context(|| anyhow!("Set Variable must be a value"))?;
+
+        self.program.push(
+            OpCode::new(
+                Operation::Mov,
+                [Variant::Stack, value.variant, Variant::None],
+            )
+            .as_usize(),
+        );
+
+        self.program.push(self.stack_size - variable - 1);
+        if value.variant == Variant::Stack {
+            self.program.push(self.stack_size - value.value - 1);
+        } else {
+            self.program.push(value.value);
+        }
+
         Ok(())
     }
 }

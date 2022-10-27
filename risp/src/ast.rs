@@ -6,6 +6,7 @@ pub enum AST {
     NumberLiteral(NumberLiteral),
 
     VariableDefinition(VariableDefinition),
+    VariableSet(VariableDefinition),
     Variable(Identifier),
 
     FunctionDefinition(FunctionDefinition),

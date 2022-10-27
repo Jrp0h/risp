@@ -31,11 +31,11 @@ impl VariableStack {
         None
     }
 
-    pub fn set(&mut self, variable: String, current_stack_count: usize) {
-        let len = self.stack.len() - 1;
-        self.stack[len].insert(variable, current_stack_count);
-        todo!("This is wrong, should look up in previous aswell");
-    }
+    // pub fn set(&mut self, variable: String, current_stack_count: usize) -> Result<()> {
+    //     let len = self.stack.len() - 1;
+    //     self.stack[len].insert(variable, current_stack_count);
+    //     todo!("This is wrong, should look up in previous aswell");
+    // }
 
     pub fn create(&mut self, name: String, current_stack_count: usize) -> Result<()> {
         let len = self.stack.len() - 1;

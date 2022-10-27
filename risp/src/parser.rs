@@ -131,12 +131,24 @@ impl Parser {
     }
 
     fn parse_variable_definition(&mut self) -> Result<AST> {
-        self.eat(TokenType::Identifier)?; // defun
+        self.eat(TokenType::Identifier)?; // defvar
         self.eat(TokenType::Dollar)?; // $
-        let id = self.eat(TokenType::Identifier)?; // ex main
+        let id = self.eat(TokenType::Identifier)?; // ex num
 
         let value = self.parse_number_variable_or_statement()?;
         Ok(AST::VariableDefinition(VariableDefinition {
+            id: Identifier { name: id.value },
+            value: Box::new(value),
+        }))
+    }
+
+    fn parse_set_variable(&mut self) -> Result<AST> {
+        self.eat(TokenType::Identifier)?; // defvar
+        self.eat(TokenType::Dollar)?; // $
+        let id = self.eat(TokenType::Identifier)?; // ex num
+
+        let value = self.parse_number_variable_or_statement()?;
+        Ok(AST::VariableSet(VariableDefinition {
             id: Identifier { name: id.value },
             value: Box::new(value),
         }))
@@ -146,6 +158,7 @@ impl Parser {
         match self.current.value.as_str() {
             "defun" => self.parse_function_definition(),
             "defvar" => self.parse_variable_definition(),
+            "setvar" => self.parse_set_variable(),
             "print" => self.parse_function_call(),
             "exit" => self.parse_function_call(),
             _ => todo!("Not implemented yet"),
