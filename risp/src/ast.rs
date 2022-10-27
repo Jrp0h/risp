@@ -31,7 +31,7 @@ pub struct Identifier {
 
 #[derive(Debug)]
 pub struct Call {
-    pub name: Identifier,
+    pub id: Identifier,
     pub args: Vec<Box<AST>>,
 }
 
@@ -42,13 +42,13 @@ pub struct NumberLiteral {
 
 #[derive(Debug)]
 pub struct VariableDefinition {
-    pub name: Identifier,
-    pub value: Vec<Box<AST>>,
+    pub id: Identifier,
+    pub value: Box<AST>,
 }
 
 #[derive(Debug)]
 pub struct FunctionDefinition {
-    pub name: Identifier,
+    pub id: Identifier,
     pub variables: Vec<Identifier>,
-    pub block: Box<AST>,
+    pub block: Block,
 }

@@ -50,7 +50,6 @@ impl Parser {
     }
 
     fn eat(&mut self, expected: TokenType) -> Result<Token> {
-        println!("Expected: {:?} got {:?}", expected, self.current.r#type);
         if self.current.r#type == expected {
             let old = self.current.clone();
             self.advance();
@@ -97,16 +96,16 @@ impl Parser {
             args.push(Box::new(self.parse_number_variable_or_statement()?));
         }
         Ok(AST::Call(Call {
-            name: Identifier { name: name.value },
+            id: Identifier { name: name.value },
             args,
         }))
     }
 
-    fn parse_block(&mut self) -> Result<AST> {
+    fn parse_block(&mut self) -> Result<Block> {
         self.eat(TokenType::LCurly)?;
         let statements = self.parse_statements()?;
         self.eat(TokenType::RCurly)?;
-        Ok(AST::Block(Block { statements }))
+        Ok(Block { statements })
     }
 
     fn parse_function_definition(&mut self) -> Result<AST> {
@@ -125,16 +124,28 @@ impl Parser {
         let block = self.parse_block()?;
 
         Ok(AST::FunctionDefinition(FunctionDefinition {
-            name: Identifier { name: name.value },
+            id: Identifier { name: name.value },
             variables,
-            block: Box::new(block),
+            block,
+        }))
+    }
+
+    fn parse_variable_definition(&mut self) -> Result<AST> {
+        self.eat(TokenType::Identifier)?; // defun
+        self.eat(TokenType::Dollar)?; // $
+        let id = self.eat(TokenType::Identifier)?; // ex main
+
+        let value = self.parse_number_variable_or_statement()?;
+        Ok(AST::VariableDefinition(VariableDefinition {
+            id: Identifier { name: id.value },
+            value: Box::new(value),
         }))
     }
 
     fn parse_keyword(&mut self) -> Result<AST> {
         match self.current.value.as_str() {
             "defun" => self.parse_function_definition(),
-            // "defvar" => todo!("Implement"),
+            "defvar" => self.parse_variable_definition(),
             "print" => self.parse_function_call(),
             "exit" => self.parse_function_call(),
             _ => todo!("Not implemented yet"),

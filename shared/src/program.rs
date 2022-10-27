@@ -1,4 +1,4 @@
-use crate::instruction::{OpCode, Operation, Variant};
+use crate::instruction::{NativeFunctions, OpCode, Operation, Variant};
 use anyhow::{anyhow, Context, Result};
 
 #[derive(Clone, Copy, Debug)]
@@ -17,7 +17,13 @@ impl Operand {
             Variant::Stack => format!("s({})", self.value),
             Variant::Register => format!("r({})", self.value),
             Variant::Direct => format!("{}", self.value),
-            Variant::Native => format!("${}", self.value), // TODO: Look up native function name from number
+            Variant::Native => format!(
+                "${}",
+                NativeFunctions::from_usize(self.value)
+                    .unwrap()
+                    .to_string()
+                    .unwrap()
+            ), // TODO: Look up native function name from number
             Variant::None | Variant::Indirect => "".to_string(),
         }
     }
@@ -104,7 +110,7 @@ impl ProgramParser {
         match opcode.operation() {
             Some(Operation::Nop) => self.collect_zero(&opcode),
             Some(Operation::Push) => self.collect_one(&opcode),
-            Some(Operation::Pop) => self.collect_one(&opcode),
+            Some(Operation::Pop) => self.collect_zero(&opcode),
             Some(Operation::Add) => self.collect_zero(&opcode),
             Some(Operation::Mult) => self.collect_zero(&opcode),
             Some(Operation::Sub) => self.collect_zero(&opcode),

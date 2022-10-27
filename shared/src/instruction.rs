@@ -183,4 +183,20 @@ impl NativeFunctions {
             _ => None,
         }
     }
+
+    pub fn from_usize(num: usize) -> Option<NativeFunctions> {
+        match num {
+            0 => Some(NativeFunctions::Print),
+            1 => Some(NativeFunctions::Exit),
+            _ => None,
+        }
+    }
+
+    pub fn to_string(&self) -> Option<&'static str> {
+        match self {
+            NativeFunctions::Print => Some("print"),
+            NativeFunctions::Exit => Some("exit"),
+            _ => None,
+        }
+    }
 }

@@ -1,5 +1,5 @@
 use asm::assembler::Assembler;
-use risp::parser::Parser;
+use risp::{codegen::CodeGen, parser::Parser};
 use shared::{lexer::Lexer, program::ProgramParser, token::Token};
 use vm::vm::VM;
 
@@ -22,8 +22,19 @@ pub fn run(args: RunArgs) {
         let lexer = Lexer::new_from_path(args.filepath.to_string());
         // let tokens: Vec<Token> = lexer.collect();
         let ast = Parser::parse(lexer).unwrap();
-        println!("{:#?}", ast);
-        todo!("Risp Parser");
+        // println!("{:#?}", ast);
+        let bytecode = CodeGen::new().generate(ast).unwrap();
+        program = bytecode.clone();
+
+        let program = ProgramParser::new(bytecode).parse().unwrap();
+
+        // for (i, code) in bytecode.iter().enumerate() {
+        //     println!("{}: {} {:#x} {:#b}", i, code, code, code);
+        // }
+
+        println!("{}", program.to_string());
+        // todo!("Risp Parser");
+        // println!("{:#?}", ast);
     } else {
         // Bin
         program = shared::fileformat::FileFormat::from_file(args.filepath)

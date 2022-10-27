@@ -166,6 +166,10 @@ impl VM {
                 let value = self.advance().unwrap();
                 self.stack.push(self.register[value as usize])
             }
+            Variant::Stack => {
+                let value = self.advance().unwrap();
+                self.stack.push(self.stack[value as usize])
+            }
             other => panic!("Invalid push variant ({:?})", other),
         }
     }
