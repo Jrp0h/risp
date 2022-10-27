@@ -20,21 +20,9 @@ pub fn run(args: RunArgs) {
     } else if args.filepath.ends_with(".risp") {
         // Lisp
         let lexer = Lexer::new_from_path(args.filepath.to_string());
-        // let tokens: Vec<Token> = lexer.collect();
         let ast = Parser::parse(lexer).unwrap();
-        println!("{:#?}", ast);
         let bytecode = CodeGen::new().generate(ast).unwrap();
         program = bytecode.clone();
-
-        let program = ProgramParser::new(bytecode).parse().unwrap();
-
-        // for (i, code) in bytecode.iter().enumerate() {
-        //     println!("{}: {} {:#x} {:#b}", i, code, code, code);
-        // }
-
-        println!("{}", program.to_string());
-        // todo!("Risp Parser");
-        // println!("{:#?}", ast);
     } else {
         // Bin
         program = shared::fileformat::FileFormat::from_file(args.filepath)

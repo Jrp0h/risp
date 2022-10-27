@@ -1,7 +1,6 @@
 use clap::{Parser, Subcommand};
 use run::RunArgs;
 use shared::program::ProgramParser;
-
 mod compile;
 mod disassemble;
 mod run;
@@ -29,6 +28,9 @@ enum Commands {
 
         #[arg(short = 'o', long)]
         output_path: Option<String>,
+
+        #[arg(long)]
+        ast: bool,
     },
     Disassemble {
         input_path: String,
@@ -56,10 +58,12 @@ fn main() {
         Commands::Compile {
             input_path,
             output_path,
+            ast,
         } => {
             compile::compile(compile::CompileArgs {
                 input_path: input_path.to_string(),
                 output_path: output_path.clone(),
+                ast: *ast,
             });
         }
         Commands::Disassemble {
