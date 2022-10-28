@@ -24,6 +24,7 @@ pub enum Operation {
     Call = 18,
     Ret = 19,
     Not = 20,
+    Swap = 21,
 }
 
 impl Operation {
@@ -50,6 +51,7 @@ impl Operation {
             18 => Some(Operation::Call),
             19 => Some(Operation::Ret),
             20 => Some(Operation::Not),
+            21 => Some(Operation::Swap),
             _ => None,
         }
     }
@@ -77,6 +79,7 @@ impl Operation {
             "call" => Some(Operation::Call),
             "ret" => Some(Operation::Ret),
             "not" => Some(Operation::Not),
+            "swap" => Some(Operation::Swap),
             _ => None,
         }
     }
@@ -104,6 +107,7 @@ impl Operation {
             Operation::Call => "call",
             Operation::Ret => "ret",
             Operation::Not => "not",
+            Operation::Swap => "swap",
         }
     }
 }
@@ -116,7 +120,7 @@ pub enum Variant {
     Direct = 2,
     Indirect = 3,
     Stack = 4,
-    StackRelative = 5,
+    StackAbsoulute = 5,
     Native = 6,
 }
 
@@ -128,7 +132,7 @@ impl Variant {
             2 => Some(Variant::Direct),
             3 => Some(Variant::Indirect),
             4 => Some(Variant::Stack),
-            5 => Some(Variant::StackRelative),
+            5 => Some(Variant::StackAbsoulute),
             6 => Some(Variant::Native),
             _ => None,
         }

@@ -57,6 +57,7 @@ impl VM {
             Some(Operation::Call) => return self.op_call(&opcode),
             Some(Operation::Ret) => self.op_ret(),
             Some(Operation::Not) => self.op_not(),
+            Some(Operation::Swap) => self.op_swap(),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }
@@ -93,7 +94,7 @@ impl VM {
             Variant::Direct => Ok(value),
             Variant::Register => Ok(self.register[value]),
             Variant::Stack => Ok(self.stack[self.stack.len() - (value + 1)]),
-            Variant::StackRelative => Ok(self.stack[value]),
+            Variant::StackAbsoulute => Ok(self.stack[value]),
             other => Err(anyhow!("Can't get value from variant {:?}", other)),
         }
     }
@@ -163,7 +164,7 @@ impl VM {
                 let len = self.stack.len();
                 self.stack.push(self.stack[len - (value + 1)]);
             }
-            Variant::StackRelative => {
+            Variant::StackAbsoulute => {
                 let value = self.advance().unwrap();
                 self.stack.push(self.stack[value as usize])
             }
@@ -188,7 +189,7 @@ impl VM {
                 let len = self.stack.len();
                 self.stack[len - (where_value + 1)] = what;
             }
-            Variant::StackRelative => {
+            Variant::StackAbsoulute => {
                 self.stack[where_value] = what;
             }
             other => panic!("Invalid mov variant ({:?})", other),
@@ -255,12 +256,13 @@ impl VM {
         let variant = op.variants().unwrap()[0];
         match variant {
             Variant::Direct => {
-                self.call_stack.push(self.pc + 1);
+                self.call_stack.push(self.pc + 2); // 0 current, +1 is operand, +2 next
                 self.pc = value;
             }
             Variant::Native => {
                 if value == NativeFunctions::Print as usize {
                     println!("{}", self.stack[self.stack.len() - 1]);
+                    self.stack.push(0); // all functions must return something
                 }
                 if value == NativeFunctions::Exit as usize {
                     return false;
@@ -281,6 +283,13 @@ impl VM {
         self.stack.push(res as usize);
     }
 
+    fn op_swap(&mut self) {
+        let first = self.stack.pop().unwrap();
+        let second = self.stack.pop().unwrap();
+        self.stack.push(first);
+        self.stack.push(second);
+    }
+
     fn op_jmp(&mut self, op: &OpCode, operation: Operation) {
         let variant = op.variants().unwrap()[0];
         let value = self.advance().unwrap();
@@ -290,7 +299,7 @@ impl VM {
                 self.pc = self.value_from_variant(variant, value).unwrap();
             }
             Operation::JmpIf => {
-                let cond = self.stack[self.stack.len() - 1];
+                let cond = self.stack.pop().unwrap();
                 if cond != 0 {
                     let addr = self.value_from_variant(variant, value).unwrap();
                     self.pc = addr;

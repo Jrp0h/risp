@@ -15,7 +15,7 @@ impl Operand {
     pub fn format(&self) -> String {
         match self.variant {
             Variant::Stack => format!("s({})", self.value),
-            Variant::StackRelative => format!("sr({})", self.value),
+            Variant::StackAbsoulute => format!("sa({})", self.value),
             Variant::Register => format!("r({})", self.value),
             Variant::Direct => format!("{}", self.value),
             Variant::Native => format!(
@@ -130,6 +130,8 @@ impl ProgramParser {
             Some(Operation::Call) => self.collect_one(&opcode),
             Some(Operation::Ret) => self.collect_zero(&opcode),
             Some(Operation::Not) => self.collect_zero(&opcode),
+            Some(Operation::Mod) => self.collect_zero(&opcode),
+            Some(Operation::Swap) => self.collect_zero(&opcode),
             Some(other) => {
                 todo!("Opcode {:?} not implemented", other)
             }

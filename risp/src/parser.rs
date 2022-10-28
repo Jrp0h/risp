@@ -226,7 +226,7 @@ impl Parser {
             TokenType::Number => AST::NumberLiteral(crate::ast::NumberLiteral {
                 value: self.current.value.parse::<usize>()?,
             }),
-            _ => todo!("Implement "),
+            other => todo!("Implement {:?}", other),
         };
         self.eat(TokenType::RParen)?;
         Ok(statement)

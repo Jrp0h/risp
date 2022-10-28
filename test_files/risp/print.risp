@@ -1,13 +1,30 @@
-; (defun main {
-;  (print 5)
-;  (exit)
-; })
-
 (defun main {
-  (defvar $i 0)
-  (while (< $i 3) {
-    (setvar $i (+ $i 1))
-    ; /* (print 10) */
-  })
+  (print (num 5))
   (exit)
 })
+
+(defun num $number {
+  (defvar $adder 7)
+
+  (if (= $number 3) {
+    (return $adder)
+  } else {
+    (return (+ $number 10))
+  })
+})
+
+; (defun main {
+;   (defvar $i 3)
+;   ; (while (> $i 0) {
+;   (setvar $i (dec $i))
+;   (print $i)
+;     ; /* (print 10) */
+;   ; })
+;   (exit)
+; })
+;
+; (defun dec $num {
+;   (return (- $num 1))
+; })
+
+

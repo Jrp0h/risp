@@ -1,0 +1,56 @@
+  push 6
+  call 14
+  swap 
+  pop 
+  push s(0)
+  call $print
+  swap 
+  pop 
+  call $exit
+
+  push 0
+  push s(0) ; bad push, it referances $steps instead of arg $num
+  push 1
+  not 
+  jmp_if 58
+  pop 
+  push sa(1)
+  call 58
+  swap 
+  pop 
+  mov sa(1), s(1)
+  push sa(0)
+  push 1
+  add 
+  mov sa(0), s(2)
+  push sa(1)
+  push 1
+  cmp_eq 
+  not 
+  jmp_if 55
+  pop 
+  push sa(0)
+  ret 
+  jmp 55
+  pop 
+  jmp 18
+  push s(0)
+  push 2
+  mod 
+  push 0
+  cmp_eq 
+  not 
+  jmp_if 78
+  pop 
+  push s(0)
+  push 2
+  div 
+  ret 
+  jmp 87
+  pop 
+  push s(0)
+  push 3
+  mult 
+  push 1
+  add 
+  ret 

@@ -1,39 +1,33 @@
+
+(defun main {
+  (print (collatz (collatz (collatz 6))))
+  (exit)
+; (from 1 to 10 {
+;   (setvar $current (count_collatz $current))
+;   (print $current)
+; })
+})
+
+
+(defun count_collatz $numer {
+  (defvar $steps 0)
+  (defvar $current $numer)
+  (exit)
+
+  (while 1 {
+    (setvar $current (collatz $current))
+    (setvar $steps (+ $steps 1))
+    ; (print $current) 
+    (if (= $current 1) {
+      (return $steps)   
+    })
+  })
+})
+
 (defun collatz $num {
   (if (= (% $num 2) 0) {
     (return (/ $num 2))   
   } else {
     (return (+ (* $num 3) 1))   
-  })
-})
-
-(defun count_collatz $num {
-  (defvar $steps 0)
-  (defvar $current $num)
-
-  (while 1 {
-    (setvar $current (collatz $current))
-    (setvar $steps (+ $steps 1))
-
-    (if (= $current 1) {
-      (:break)   
-    })
-  })
-
-  (print $steps)
-})
-
-; (defun main {
-; (defvar $current 6)
-; (from 1 :to 10 {
-;   (setvar $current (collatz $current))
-;   (print $current)
-; })
-; })
-
-(defun main {
-  (defvar $current 6)
-  (:from 1 :to 10 {
-    (setvar $current (count_collatz $current))
-    (print $current)
   })
 })

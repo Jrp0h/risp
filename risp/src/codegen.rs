@@ -1,3 +1,5 @@
+// FIXME: Arguments stack position are incorrect
+
 use anyhow::{anyhow, Context, Result};
 use shared::{
     instruction::{NativeFunctions, OpCode, Operation, Variant},
@@ -67,16 +69,25 @@ impl CodeGen {
             .push(OpCode::new(Operation::Push, [variant, Variant::None, Variant::None]).as_usize());
         self.program.push(value);
         self.stack_size += 1;
+        self.variable_stack.increment_relative();
 
         return self.stack_size - 1;
     }
 
     fn stack_pop(&mut self) {
         self.program.push(op!(Pop));
+        self.variable_stack.decrement_relative();
+        self.stack_size -= 1;
+    }
+
+    // Pop but without popping
+    fn stack_lower(&mut self) {
+        self.variable_stack.decrement_relative();
         self.stack_size -= 1;
     }
 
     pub fn generate(&mut self, ast: AST) -> Result<(Vec<usize>, usize)> {
+        self.variable_stack.enter();
         match ast {
             AST::Root(block) => {
                 self.generate_block(&block)?;
@@ -96,6 +107,7 @@ impl CodeGen {
             .functions
             .get("main")
             .with_context(|| anyhow!("main function not defined"))?;
+        self.variable_stack.enter();
 
         Ok((self.program.clone(), *entry))
     }
@@ -126,6 +138,12 @@ impl CodeGen {
             }
         }
 
+        // Pop all args
+        for _ in &call.args {
+            self.program.push(op!(Swap));
+            self.stack_pop();
+        }
+
         Ok(())
     }
 
@@ -148,11 +166,12 @@ impl CodeGen {
                     .variable_stack
                     .get(var.name.clone())
                     .with_context(|| format!("Unknown variable {}", var.name))?;
-                return Ok(Some(Operand::new(v, Variant::StackRelative)));
+                // FiXME: This should be pushed
+                return Ok(Some(Operand::new(v.location, v.variant)));
             }
             AST::BinOp(binop) => {
                 self.generate_binop(binop)?;
-                return Ok(Some(Operand::new(0, Variant::Register)));
+                return Ok(Some(Operand::new(0, Variant::Stack)));
             }
             AST::Return(ret) => self.generate_return(ret)?,
             AST::If(ef) => self.generate_if(ef)?,
@@ -165,35 +184,43 @@ impl CodeGen {
     }
 
     pub fn generate_block(&mut self, block: &Block) -> Result<()> {
+        self.variable_stack.enter();
         for stmt in &block.statements {
             self.generate_statement(&(*stmt))?;
         }
+        self.variable_stack.leave()?;
 
         Ok(())
     }
 
     pub fn generate_function(&mut self, definition: &FunctionDefinition) -> Result<()> {
-        self.variable_stack.enter();
+        // self.variable_stack.enter();
         // TODO: Validate that the function isnt already defined
         self.functions
             .insert(definition.id.name.clone(), self.program.len());
 
         for (i, var) in definition.variables.iter().enumerate() {
-            self.variable_stack.create(var.name.clone(), i)?;
+            self.variable_stack
+                .create(var.name.clone(), i, Variant::Stack)?;
         }
 
         self.generate_block(&definition.block)?;
-        self.variable_stack.leave()?;
+        // self.variable_stack.leave()?;
         Ok(())
     }
 
     pub fn generate_variable_definition(&mut self, definition: &VariableDefinition) -> Result<()> {
-        self.variable_stack
-            .create(definition.id.name.clone(), self.stack_size)?;
         let value = self.generate_statement(&(*definition.value))?;
         let value = value.with_context(|| anyhow!("Variable definition must be a value"))?;
 
         self.stack_push(value.variant, value.value);
+        self.variable_stack.create(
+            definition.id.name.clone(),
+            // self.stack_size,
+            // Variant::StackAbsoulute,
+            0,
+            Variant::Stack,
+        )?;
         Ok(())
     }
 
@@ -209,12 +236,13 @@ impl CodeGen {
         self.program.push(
             OpCode::new(
                 Operation::Mov,
-                [Variant::StackRelative, value.variant, Variant::None],
+                [Variant::Stack, value.variant, Variant::None],
+                // [Variant::StackAbsoulute, value.variant, Variant::None],
             )
             .as_usize(),
         );
 
-        self.program.push(variable);
+        self.program.push(variable.location);
         if value.variant == Variant::Stack {
             self.program.push(self.stack_size - value.value - 1);
         } else {
@@ -224,6 +252,21 @@ impl CodeGen {
         Ok(())
     }
 
+    pub fn push_if_not_last_on_stack(&mut self, ast: &AST, operand: Operand) {
+        // FIXME: This is just a test
+        match ast {
+            AST::Variable(_) => {
+                self.stack_push(operand.variant, operand.value);
+            }
+            _ => {
+                if operand.variant == Variant::Stack && operand.value == 0 {
+                    return;
+                }
+                self.stack_push(operand.variant, operand.value);
+            }
+        }
+    }
+
     pub fn generate_binop(&mut self, binop: &BinOp) -> Result<()> {
         let value = self.generate_statement(&(*binop.lhs))?;
         let lhs = value.with_context(|| anyhow!("LHS must evaluate to a value"))?;
@@ -231,8 +274,10 @@ impl CodeGen {
         let value = self.generate_statement(&(*binop.rhs))?;
         let rhs = value.with_context(|| anyhow!("RHS must evaluate to a value"))?;
 
-        self.stack_push(lhs.variant, lhs.value);
-        self.stack_push(rhs.variant, rhs.value);
+        // self.stack_push(lhs.variant, lhs.value);
+        // self.stack_push(rhs.variant, rhs.value);
+        self.push_if_not_last_on_stack(&binop.lhs, lhs);
+        self.push_if_not_last_on_stack(&binop.rhs, rhs);
 
         match binop.op {
             TokenType::Plus => self.program.push(op!(Add)),
@@ -246,12 +291,12 @@ impl CodeGen {
             other => return Err(anyhow!("{:?} isn't a valid binary operation", other)),
         }
 
-        self.stack_size -= 1; // all binops removes one from the stack
+        self.stack_lower(); // all binops removes one from the stack
 
-        self.program.push(op!(Mov, Register, Stack));
-        self.program.push(0);
-        self.program.push(0);
-        self.stack_pop();
+        // self.program.push(op!(Mov, Register, Stack));
+        // self.program.push(0);
+        // self.program.push(0);
+        // self.stack_pop();
 
         Ok(())
     }
@@ -259,20 +304,23 @@ impl CodeGen {
     pub fn generate_return(&mut self, ret: &Return) -> Result<()> {
         let value = self.generate_statement(&(*ret.value))?;
         let value = value.with_context(|| anyhow!("return must evaluate to a value"))?;
-        self.stack_push(value.variant, value.value);
+        // self.stack_push(value.variant, value.value);
+        self.push_if_not_last_on_stack(&ret.value, value);
         self.program.push(op!(Ret));
         Ok(())
     }
 
     pub fn generate_if(&mut self, ef: &If) -> Result<()> {
-        self.variable_stack.enter();
+        // self.variable_stack.enter();
         let value = self.generate_statement(&(*ef.cond))?;
         let cond = value.with_context(|| anyhow!("condition must evaluate to a value"))?;
-        self.stack_push(cond.variant, cond.value);
+        self.push_if_not_last_on_stack(&ef.cond, cond);
+        // self.stack_push(cond.variant, cond.value);
 
         self.program.push(op!(Not));
         self.program.push(op!(JmpIf, Direct));
         self.program.push(0);
+        self.stack_lower(); // jmp removed condition;
         let jmp_to_else_addr = self.program.len() - 1;
 
         self.generate_block(&ef.then)?;
@@ -285,14 +333,13 @@ impl CodeGen {
             self.generate_block(else_block)?;
         }
 
-        self.program[jmp_to_end_addr] = self.program.len();
-
-        self.variable_stack.leave()?;
+        self.program[jmp_to_end_addr] = self.program.len() - 1;
+        // self.variable_stack.leave()?;
         Ok(())
     }
 
     pub fn generate_from_to(&mut self, ft: &FromTo) -> Result<()> {
-        self.variable_stack.enter();
+        // self.variable_stack.enter();
         let value = self.generate_statement(&(*ft.start))?;
         let start = value.with_context(|| anyhow!("start must evaluate to a value"))?;
 
@@ -304,7 +351,7 @@ impl CodeGen {
 
         let loop_start = self.program.len();
         // push current and finish
-        self.stack_push(Variant::StackRelative, var);
+        self.stack_push(Variant::StackAbsoulute, var);
         self.stack_push(finish.variant, finish.value);
 
         //cmp
@@ -318,11 +365,11 @@ impl CodeGen {
         self.generate_block(&ft.block)?;
 
         // add
-        self.stack_push(Variant::StackRelative, var);
+        self.stack_push(Variant::StackAbsoulute, var);
         self.stack_push(Variant::Direct, 1);
         self.program.push(op!(Add));
 
-        self.program.push(op!(Mov, StackRelative, Stack));
+        self.program.push(op!(Mov, StackAbsoulute, Stack));
         self.program.push(var);
         self.program.push(0);
         self.stack_pop(); // cmp
@@ -336,20 +383,22 @@ impl CodeGen {
         self.stack_pop(); // current
         self.stack_pop(); // start
 
-        self.variable_stack.leave();
+        // self.variable_stack.leave()?;
         Ok(())
     }
 
     pub fn generate_while(&mut self, wile: &While) -> Result<()> {
-        self.variable_stack.enter();
+        // self.variable_stack.enter();
         let start_addr = self.program.len();
 
         let value = self.generate_statement(&(*wile.cond))?;
         let cond = value.with_context(|| anyhow!("condition must evaluate to a value"))?;
-        self.stack_push(cond.variant, cond.value);
+        self.push_if_not_last_on_stack(&wile.cond, cond);
+        // self.stack_push(cond.variant, cond.value);
 
         self.program.push(op!(Not));
         self.program.push(op!(JmpIf, Direct));
+        self.stack_lower(); // jmp removed condition;
         self.program.push(0);
         let jmp_to_end_addr = self.program.len() - 1;
 
@@ -359,7 +408,7 @@ impl CodeGen {
 
         self.program[jmp_to_end_addr] = self.program.len();
 
-        self.variable_stack.leave()?;
+        // self.variable_stack.leave()?;
         Ok(())
     }
 }

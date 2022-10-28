@@ -1,0 +1,22 @@
+  push 5
+  call 14
+  swap 
+  pop 
+  push s(0)
+  call $print
+  swap 
+  pop 
+  call $exit
+  push 7
+  push s(1)
+  push 3
+  cmp_eq 
+  not 
+  jmp_if 29
+  push s(0)
+  ret 
+  jmp 34
+  push s(1)
+  push 10
+  add 
+  ret 

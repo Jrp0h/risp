@@ -100,7 +100,7 @@ impl Assembler {
         match instruction.value.as_str() {
             "mov" => self.handle_mov(),
             "push" => self.handle_push(),
-            "dup" => self.handle_dup(),
+            "dup" => self.handle_zero_operands(Operation::Dup),
             "add" => self.handle_zero_operands(Operation::Add),
             "sub" => self.handle_zero_operands(Operation::Sub),
             "mult" => self.handle_zero_operands(Operation::Mult),
@@ -117,6 +117,8 @@ impl Assembler {
             "call" => self.handle_call(),
             "ret" => self.handle_zero_operands(Operation::Ret),
             "not" => self.handle_zero_operands(Operation::Not),
+            "swap" => self.handle_zero_operands(Operation::Swap),
+            "pop" => self.handle_zero_operands(Operation::Pop),
             other => Err(error_at!(
                 self.current.span,
                 "Unknown instruction {}",
@@ -146,7 +148,7 @@ impl Assembler {
                 self.eat(TokenType::RParen)?;
                 match id.value.as_str() {
                     "s" => Ok(Operand::Stack(num)),
-                    "sr" => Ok(Operand::StackRelative(num)),
+                    "sa" => Ok(Operand::StackRelative(num)),
                     "r" => Ok(Operand::Register(num)),
                     other => Err(error_at!(
                         self.current.span,
@@ -323,7 +325,7 @@ impl Operand {
             Operand::Register(_) => Ok(Variant::Register),
             Operand::Direct(_) => Ok(Variant::Direct),
             Operand::Stack(_) => Ok(Variant::Stack),
-            Operand::StackRelative(_) => Ok(Variant::StackRelative),
+            Operand::StackRelative(_) => Ok(Variant::StackAbsoulute),
             Operand::Native(_) => Ok(Variant::Native),
             _ => Err(anyhow!("Operand cant be a variant")),
         }

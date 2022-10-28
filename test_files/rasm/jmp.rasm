@@ -1,6 +1,6 @@
 push 70
 push 60
-cmp_gt s(1), s(0)
+cmp_gt
 
 jmp_if .p
 jmp .end
