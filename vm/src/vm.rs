@@ -100,25 +100,37 @@ impl VM {
     }
 
     pub fn dump(&self) {
-        println!("Stack:");
         self.dump_stack();
-
-        println!("\nRegisters:");
+        println!("");
         self.dump_registers();
+        println!("");
+        self.dump_call_stack();
     }
 
     pub fn dump_stack(&self) {
+        println!("Stack:");
         if self.stack.len() == 0 {
-            println!("Empty")
+            println!("  Empty");
         }
         for (i, value) in self.stack.iter().enumerate() {
-            println!("{}: {}", i, value);
+            println!("  {}: {}", i, value);
         }
     }
 
     pub fn dump_registers(&self) {
+        println!("Registers:");
         for (i, value) in self.register.iter().enumerate() {
-            println!("r{}: {}", i, value);
+            println!("  r{}: {}", i, value);
+        }
+    }
+
+    pub fn dump_call_stack(&self) {
+        println!("Call Stack:");
+        if self.call_stack.len() == 0 {
+            println!("  Empty");
+        }
+        for (i, value) in self.call_stack.iter().enumerate() {
+            println!("  {}: {}", i, value);
         }
     }
 
@@ -256,7 +268,7 @@ impl VM {
         let variant = op.variants().unwrap()[0];
         match variant {
             Variant::Direct => {
-                self.call_stack.push(self.pc + 2); // 0 current, +1 is operand, +2 next
+                self.call_stack.push(self.pc); // 0 current, +1 is operand, +2 next
                 self.pc = value;
             }
             Variant::Native => {

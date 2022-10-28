@@ -1,4 +1,4 @@
-  push 6
+  push 19
   call 14
   swap 
   pop 
@@ -7,31 +7,29 @@
   swap 
   pop 
   call $exit
-
   push 0
-  push s(0) ; bad push, it referances $steps instead of arg $num
+  push s(1)
   push 1
   not 
-  jmp_if 58
-  pop 
-  push sa(1)
-  call 58
+  jmp_if 57
+  push s(0)
+  call 57
   swap 
   pop 
-  mov sa(1), s(1)
-  push sa(0)
-  push 1
-  add 
-  mov sa(0), s(2)
-  push sa(1)
+  mov s(1), s(0)
+  pop 
+  push s(0)
   push 1
   cmp_eq 
   not 
-  jmp_if 55
-  pop 
-  push sa(0)
+  jmp_if 46
+  push s(1)
   ret 
-  jmp 55
+  jmp 54
+  push s(1)
+  push 1
+  add 
+  mov s(2), s(0)
   pop 
   jmp 18
   push s(0)
@@ -40,14 +38,12 @@
   push 0
   cmp_eq 
   not 
-  jmp_if 78
-  pop 
+  jmp_if 76
   push s(0)
   push 2
   div 
   ret 
-  jmp 87
-  pop 
+  jmp 84
   push s(0)
   push 3
   mult 

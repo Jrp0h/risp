@@ -1,25 +1,18 @@
-
 (defun main {
-  (print (collatz (collatz (collatz 6))))
+  (print (count_collatz 19))
   (exit)
-; (from 1 to 10 {
-;   (setvar $current (count_collatz $current))
-;   (print $current)
-; })
 })
-
 
 (defun count_collatz $numer {
   (defvar $steps 0)
   (defvar $current $numer)
-  (exit)
 
   (while 1 {
     (setvar $current (collatz $current))
-    (setvar $steps (+ $steps 1))
-    ; (print $current) 
     (if (= $current 1) {
-      (return $steps)   
+     (return $steps)   
+    } else {
+      (setvar $steps (+ $steps 1))
     })
   })
 })

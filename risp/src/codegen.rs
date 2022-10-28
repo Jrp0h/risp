@@ -86,6 +86,12 @@ impl CodeGen {
         self.stack_size -= 1;
     }
 
+    // push but without pushing
+    fn stack_increce(&mut self) {
+        self.variable_stack.increment_relative();
+        self.stack_size += 1;
+    }
+
     pub fn generate(&mut self, ast: AST) -> Result<(Vec<usize>, usize)> {
         self.variable_stack.enter();
         match ast {
@@ -143,6 +149,9 @@ impl CodeGen {
             self.program.push(op!(Swap));
             self.stack_pop();
         }
+
+        // Silently push value from return
+        self.stack_increce();
 
         Ok(())
     }
@@ -225,13 +234,15 @@ impl CodeGen {
     }
 
     pub fn generate_set_variable(&mut self, definition: &VariableDefinition) -> Result<()> {
+        let value = self.generate_statement(&(*definition.value))?;
+        let value = value.with_context(|| anyhow!("Set Variable must be a value"))?;
+
+        // This must be after since the stack might change durring statement generation of the
+        // value
         let variable = self
             .variable_stack
             .get(definition.id.name.clone())
             .with_context(|| anyhow!("Unknown variable {}", definition.id.name))?;
-
-        let value = self.generate_statement(&(*definition.value))?;
-        let value = value.with_context(|| anyhow!("Set Variable must be a value"))?;
 
         self.program.push(
             OpCode::new(
@@ -243,11 +254,13 @@ impl CodeGen {
         );
 
         self.program.push(variable.location);
-        if value.variant == Variant::Stack {
-            self.program.push(self.stack_size - value.value - 1);
-        } else {
-            self.program.push(value.value);
-        }
+        // if value.variant == Variant::Stack {
+        //     self.program.push(self.stack_size - value.value - 1);
+        // } else {
+        self.program.push(value.value);
+        // }
+
+        self.stack_pop(); // remove value from
 
         Ok(())
     }

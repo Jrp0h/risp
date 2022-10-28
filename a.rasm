@@ -1,5 +1,5 @@
-  push 5
-  call 14
+  push 6
+  call .count_collatz
   swap 
   pop 
   push s(0)
@@ -7,16 +7,45 @@
   swap 
   pop 
   call $exit
-  push 7
+
+.count_collatz
+  push 0 ; steps            s(1)
+  push s(1) ; current       s(0)
+  push 1 ; - gets popped in jmp_if
+  not 
+  jmp_if 47
+  push s(0) ; gets popped in at line 20
+  call .collatz
+  swap 
+  pop 
+  mov s(0), s(0) ; left is $current, right is call return value
+; mov s(1), s(0) ; should be this but return value isnt accounted for
+; error here
   push s(1)
-  push 3
+  push 1
+  add 
+  mov s(1), s(0)
+  push s(1)
+  ret 
+  jmp 18
+  call $exit
+
+.collatz
+  push s(0)
+  push 2
+  mod 
+  push 0
   cmp_eq 
   not 
-  jmp_if 29
+  jmp_if 68
   push s(0)
+  push 2
+  div 
   ret 
-  jmp 34
-  push s(1)
-  push 10
+  jmp 76
+  push s(0)
+  push 3
+  mult 
+  push 1
   add 
   ret 
