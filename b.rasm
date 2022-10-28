@@ -1,49 +1,57 @@
-  push 19
-  call 14
-  swap 
-  pop 
+  push 5
+  push s(0)
+  push 7
+  cmp_lt 
+  not 
+  jmp_if 27
   push s(0)
   call $print
   swap 
   pop 
+  push s(0)
+  push 1
+  add 
+  mov s(1), s(0)
+  pop 
+  jmp 2
   call $exit
   push 0
   push s(1)
   push 1
   not 
-  jmp_if 57
+  jmp_if 72
   push s(0)
-  call 57
+  call 72
   swap 
   pop 
   mov s(1), s(0)
   pop 
-  push s(0)
-  push 1
-  cmp_eq 
-  not 
-  jmp_if 46
-  push s(1)
-  ret 
-  jmp 54
   push s(1)
   push 1
   add 
   mov s(2), s(0)
   pop 
-  jmp 18
+  push s(0)
+  push 1
+  cmp_eq 
+  not 
+  jmp_if 70
+  push s(1)
+  ret 
+  jmp 69
+  jmp 33
   push s(0)
   push 2
   mod 
   push 0
   cmp_eq 
   not 
-  jmp_if 76
+  jmp_if 91
   push s(0)
   push 2
   div 
   ret 
-  jmp 84
+  jmp 99
   push s(0)
   push 3
   mult 

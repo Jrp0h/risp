@@ -274,6 +274,7 @@ impl VM {
             Variant::Native => {
                 if value == NativeFunctions::Print as usize {
                     println!("{}", self.stack[self.stack.len() - 1]);
+                    // println!("{}", self.stack.pop().unwrap());
                     self.stack.push(0); // all functions must return something
                 }
                 if value == NativeFunctions::Exit as usize {

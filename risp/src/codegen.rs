@@ -143,6 +143,8 @@ impl CodeGen {
                 self.program.push(0);
             }
         }
+        // Silently push value from return
+        self.stack_increce();
 
         // Pop all args
         for _ in &call.args {
@@ -150,10 +152,23 @@ impl CodeGen {
             self.stack_pop();
         }
 
-        // Silently push value from return
-        self.stack_increce();
-
         Ok(())
+    }
+
+    pub fn has_call(&self, ast: &AST) -> bool {
+        match ast {
+            AST::NumberLiteral(_) => false,
+            AST::Call(_) => true,
+            AST::FunctionDefinition(_) => false,
+            AST::VariableDefinition(var) => self.has_call(&var.value),
+            AST::VariableSet(var) => self.has_call(&var.value),
+            AST::Variable(_) => false,
+            AST::BinOp(binop) => self.has_call(&binop.lhs) || self.has_call(&binop.rhs),
+            AST::Return(ret) => self.has_call(&ret.value),
+            AST::If(ef) => self.has_call(&ef.cond),
+            AST::While(wile) => self.has_call(&wile.cond),
+            other => todo!("Implement {:?}", other),
+        }
     }
 
     pub fn generate_statement(&mut self, statement: &AST) -> Result<Option<Operand>> {
